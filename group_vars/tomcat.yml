@@ -1,0 +1,31 @@
+---
+# =============================================================================
+# Tomcat Certificate Paths
+# =============================================================================
+cert_dest_dir: /opt/tomcat/conf/ssl
+cert_dest_cert: "{{ cert_dest_dir }}/{{ vault_cert_common_name }}.crt"
+cert_dest_key: "{{ cert_dest_dir }}/{{ vault_cert_common_name }}.key"
+cert_dest_chain: "{{ cert_dest_dir }}/{{ vault_cert_common_name }}-chain.crt"
+cert_dest_fullchain: "{{ cert_dest_dir }}/{{ vault_cert_common_name }}-fullchain.crt"
+
+# =============================================================================
+# Tomcat Keystore Configuration
+# =============================================================================
+tomcat_keystore_path: "{{ cert_dest_dir }}/{{ vault_cert_common_name }}.p12"
+tomcat_keystore_type: PKCS12
+# Keystore password is fetched from Vault KV at runtime -- see vault_cert_issue role
+tomcat_keystore_password_kv_path: "secret/data/tomcat/keystore"
+tomcat_keystore_password_kv_key: "password"
+
+# =============================================================================
+# Tomcat Service Configuration
+# =============================================================================
+cert_service_name: tomcat
+cert_service_reload_method: restarted  # JVM must restart to reload keystore
+cert_owner: tomcat
+cert_group: tomcat
+
+# =============================================================================
+# Verification
+# =============================================================================
+verify_port: 8443

@@ -1,0 +1,71 @@
+---
+# playbooks/clm_renew.yml
+# Scheduled renewal: Monitor certificate expiry, conditionally renew.
+# Intended to run daily via AAP Schedule (e.g., 02:00).
+
+- name: Certificate Lifecycle - Renewal Check
+  hosts: "{{ target_hosts | default('all') }}"
+  serial: 1
+  gather_facts: true
+
+  tasks:
+    - name: Monitor certificate expiry
+      ansible.builtin.include_role:
+        name: cert_monitor
+
+    - name: Renew certificate if needed
+      when: cert_needs_renewal | bool
+      block:
+        - name: "Renewal needed: {{ cert_days_remaining }} days remaining (threshold: {{ cert_expiry_threshold_days }})"
+          ansible.builtin.debug:
+            msg: "Initiating renewal for {{ inventory_hostname }}"
+
+        - name: Issue new certificate from Vault
+          ansible.builtin.include_role:
+            name: vault_cert_issue
+
+        - name: Backup existing certificate
+          ansible.builtin.include_role:
+            name: cert_backup
+
+        - name: Deploy and verify with rollback
+          block:
+            - name: Deploy renewed certificate
+              ansible.builtin.include_role:
+                name: cert_deploy
+
+            - name: Flush handlers to reload service
+              ansible.builtin.meta: flush_handlers
+
+            - name: Verify renewed certificate
+              ansible.builtin.include_role:
+                name: cert_verify
+
+          rescue:
+            - name: "RESCUE: Renewal deploy failed -- rolling back"
+              ansible.builtin.debug:
+                msg: "Renewal deployment failed on {{ inventory_hostname }}. Rolling back."
+
+            - name: Rollback to previous certificate
+              ansible.builtin.include_role:
+                name: cert_rollback
+
+            - name: Flush handlers after rollback
+              ansible.builtin.meta: flush_handlers
+
+            - name: Verify rollback
+              ansible.builtin.include_role:
+                name: cert_verify
+
+            - name: Fail after rollback
+              ansible.builtin.fail:
+                msg: >-
+                  Certificate renewal failed on {{ inventory_hostname }}.
+                  Rollback completed and verified. Manual investigation required.
+
+    - name: No renewal needed
+      when: not (cert_needs_renewal | bool)
+      ansible.builtin.debug:
+        msg: >-
+          Certificate on {{ inventory_hostname }} is valid for {{ cert_days_remaining }} more days.
+          No renewal needed (threshold: {{ cert_expiry_threshold_days }} days).

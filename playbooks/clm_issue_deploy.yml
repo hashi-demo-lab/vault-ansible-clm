@@ -1,0 +1,65 @@
+---
+# playbooks/clm_issue_deploy.yml
+# Main certificate lifecycle playbook: Issue -> Backup -> Deploy -> Verify
+# With block/rescue rollback on deploy or verify failure.
+# Run with: ansible-playbook playbooks/clm_issue_deploy.yml [-l target_hosts]
+
+- name: Certificate Lifecycle - Issue and Deploy
+  hosts: "{{ target_hosts | default('all') }}"
+  serial: 1
+  gather_facts: true
+
+  pre_tasks:
+    - name: Display target information
+      ansible.builtin.debug:
+        msg: >-
+          Starting certificate lifecycle for {{ inventory_hostname }}
+          (service: {{ cert_service_type }},
+           CN: {{ cert_common_name_override | default(vault_cert_common_name, true) }})
+
+  tasks:
+    - name: Issue certificate from Vault
+      ansible.builtin.include_role:
+        name: vault_cert_issue
+
+    - name: Backup existing certificate
+      ansible.builtin.include_role:
+        name: cert_backup
+
+    - name: Deploy and verify with rollback
+      block:
+        - name: Deploy certificate to target
+          ansible.builtin.include_role:
+            name: cert_deploy
+
+        - name: Flush handlers to reload service immediately
+          ansible.builtin.meta: flush_handlers
+
+        - name: Verify certificate deployment
+          ansible.builtin.include_role:
+            name: cert_verify
+
+      rescue:
+        - name: "RESCUE: Deploy or verify failed -- initiating rollback"
+          ansible.builtin.debug:
+            msg: >-
+              Certificate deployment or verification failed on {{ inventory_hostname }}.
+              Rolling back to previous certificate from {{ cert_backup_path | default('latest backup') }}.
+
+        - name: Rollback to previous certificate
+          ansible.builtin.include_role:
+            name: cert_rollback
+
+        - name: Flush handlers to reload service after rollback
+          ansible.builtin.meta: flush_handlers
+
+        - name: Verify rollback
+          ansible.builtin.include_role:
+            name: cert_verify
+
+        - name: Fail play after rollback
+          ansible.builtin.fail:
+            msg: >-
+              Certificate deployment failed on {{ inventory_hostname }}.
+              Rollback completed and verified.
+              Review the errors above to determine root cause.

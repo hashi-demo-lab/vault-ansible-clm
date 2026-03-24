@@ -1,0 +1,24 @@
+---
+# playbooks/clm_revoke.yml
+# Standalone certificate revocation.
+# Requires: -e revoke_serial_number=<serial>
+
+- name: Certificate Lifecycle - Revoke
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  pre_tasks:
+    - name: Validate revoke_serial_number is provided
+      ansible.builtin.assert:
+        that:
+          - revoke_serial_number is defined
+          - revoke_serial_number | length > 0
+        fail_msg: >-
+          revoke_serial_number is required.
+          Usage: ansible-playbook playbooks/clm_revoke.yml -e revoke_serial_number=<serial>
+
+  tasks:
+    - name: Revoke certificate in Vault
+      ansible.builtin.include_role:
+        name: vault_cert_revoke

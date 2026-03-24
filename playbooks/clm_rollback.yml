@@ -1,0 +1,21 @@
+---
+# playbooks/clm_rollback.yml
+# Manual rollback to previous certificate backup.
+# Optional: -e cert_backup_path=/opt/cert_backups/<cn>/<timestamp>
+
+- name: Certificate Lifecycle - Manual Rollback
+  hosts: "{{ target_hosts | default('all') }}"
+  serial: 1
+  gather_facts: true
+
+  tasks:
+    - name: Rollback certificate from backup
+      ansible.builtin.include_role:
+        name: cert_rollback
+
+    - name: Flush handlers to reload service
+      ansible.builtin.meta: flush_handlers
+
+    - name: Verify rollback
+      ansible.builtin.include_role:
+        name: cert_verify

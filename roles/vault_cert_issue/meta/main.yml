@@ -1,0 +1,7 @@
+---
+galaxy_info:
+  role_name: vault_cert_issue
+  description: Issue X.509 certificate from HashiCorp Vault PKI secrets engine
+  company: ""
+  min_ansible_version: "2.14"
+dependencies: []

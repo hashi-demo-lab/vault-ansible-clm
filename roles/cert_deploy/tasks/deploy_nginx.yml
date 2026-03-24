@@ -1,0 +1,17 @@
+---
+# roles/cert_deploy/tasks/deploy_nginx.yml
+# Nginx-specific: write fullchain, validate config, handler does graceful reload.
+
+- name: Deploy fullchain file for Nginx
+  ansible.builtin.copy:
+    content: "{{ issued_fullchain }}"
+    dest: "{{ cert_dest_fullchain }}"
+    owner: "{{ cert_owner }}"
+    group: "{{ cert_group }}"
+    mode: "{{ cert_file_mode }}"
+  notify: "reload nginx service"
+  no_log: true
+
+- name: Validate Nginx configuration
+  ansible.builtin.command: nginx -t
+  changed_when: false

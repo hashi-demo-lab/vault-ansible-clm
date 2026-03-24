@@ -1,0 +1,7 @@
+---
+# Defaults are inherited from group_vars/all.yml.
+# These provide fallbacks if group_vars are not loaded.
+vault_pki_mount: pki_int
+vault_pki_role: server-cert
+vault_cert_ttl: "8760h"
+vault_cert_common_name: "{{ inventory_hostname }}"

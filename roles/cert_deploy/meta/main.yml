@@ -1,0 +1,7 @@
+---
+galaxy_info:
+  role_name: cert_deploy
+  description: Deploy certificates to target hosts with service-specific handling
+  company: ""
+  min_ansible_version: "2.14"
+dependencies: []

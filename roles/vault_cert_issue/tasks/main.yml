@@ -1,0 +1,41 @@
+---
+# roles/vault_cert_issue/tasks/main.yml
+# Issue a certificate from Vault PKI secrets engine via AppRole auth.
+# Sets facts: issued_certificate, issued_private_key, issued_ca_chain,
+#             issued_serial_number, issued_fullchain
+
+- name: Determine common name
+  ansible.builtin.set_fact:
+    _cert_cn: "{{ cert_common_name_override | default(vault_cert_common_name, true) }}"
+
+- name: Issue certificate from Vault PKI
+  community.hashi_vault.vault_pki_generate_certificate:
+    url: "{{ vault_addr }}"
+    auth_method: approle
+    role_id: "{{ vault_role_id }}"
+    secret_id: "{{ vault_secret_id }}"
+    namespace: "{{ vault_namespace | default(omit) }}"
+    engine_mount_point: "{{ vault_pki_mount }}"
+    role_name: "{{ vault_pki_role }}"
+    common_name: "{{ _cert_cn }}"
+    alt_names: "{{ cert_alt_names_override | default(vault_cert_alt_names, true) | default(omit) }}"
+    ip_sans: "{{ vault_cert_ip_sans | default(omit) }}"
+    ttl: "{{ vault_cert_ttl }}"
+  register: _vault_cert_result
+  no_log: true
+
+- name: Set certificate facts
+  ansible.builtin.set_fact:
+    issued_certificate: "{{ _vault_cert_result.data.certificate }}"
+    issued_private_key: "{{ _vault_cert_result.data.private_key }}"
+    issued_ca_chain: "{{ _vault_cert_result.data.ca_chain | join('\n') }}"
+    issued_serial_number: "{{ _vault_cert_result.data.serial_number }}"
+    issued_fullchain: "{{ _vault_cert_result.data.certificate }}\n{{ _vault_cert_result.data.ca_chain | join('\n') }}"
+  no_log: true
+
+- name: Display issued certificate summary (no secrets)
+  ansible.builtin.debug:
+    msg: >-
+      Certificate issued for CN={{ _cert_cn }},
+      serial={{ issued_serial_number }},
+      TTL={{ vault_cert_ttl }}

@@ -1,0 +1,3 @@
+---
+cert_backup_base_path: /opt/cert_backups
+cert_backup_retain_count: 5

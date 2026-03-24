@@ -1,0 +1,43 @@
+---
+# roles/cert_deploy/tasks/main.yml
+# Dispatcher: deploy cert/key/chain files, then include service-specific tasks.
+
+- name: Ensure certificate destination directory exists
+  ansible.builtin.file:
+    path: "{{ cert_dest_dir }}"
+    state: directory
+    mode: "0755"
+    owner: "{{ cert_owner }}"
+    group: "{{ cert_group }}"
+
+- name: Deploy certificate file
+  ansible.builtin.copy:
+    content: "{{ issued_certificate }}"
+    dest: "{{ cert_dest_cert }}"
+    owner: "{{ cert_owner }}"
+    group: "{{ cert_group }}"
+    mode: "{{ cert_file_mode }}"
+  notify: "reload {{ cert_service_type }} service"
+  no_log: true
+
+- name: Deploy private key file
+  ansible.builtin.copy:
+    content: "{{ issued_private_key }}"
+    dest: "{{ cert_dest_key }}"
+    owner: "{{ cert_owner }}"
+    group: "{{ cert_group }}"
+    mode: "{{ cert_key_mode }}"
+  notify: "reload {{ cert_service_type }} service"
+  no_log: true
+
+- name: Deploy CA chain file
+  ansible.builtin.copy:
+    content: "{{ issued_ca_chain }}"
+    dest: "{{ cert_dest_chain }}"
+    owner: "{{ cert_owner }}"
+    group: "{{ cert_group }}"
+    mode: "{{ cert_file_mode }}"
+  notify: "reload {{ cert_service_type }} service"
+
+- name: Include service-specific deployment tasks
+  ansible.builtin.include_tasks: "deploy_{{ cert_service_type }}.yml"

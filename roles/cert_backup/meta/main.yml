@@ -1,0 +1,7 @@
+---
+galaxy_info:
+  role_name: cert_backup
+  description: Create timestamped backup of existing certificate files
+  company: ""
+  min_ansible_version: "2.14"
+dependencies: []

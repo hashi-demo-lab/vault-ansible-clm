@@ -1,0 +1,111 @@
+---
+# roles/cert_backup/tasks/main.yml
+# Create timestamped backup of existing certificate files.
+# Sets fact: cert_backup_path (path to this backup)
+# Reads old cert serial for potential later revocation: cert_old_serial_number
+
+- name: Set backup common name
+  ansible.builtin.set_fact:
+    _backup_cn: "{{ cert_common_name_override | default(vault_cert_common_name, true) }}"
+
+- name: Set backup timestamp
+  ansible.builtin.set_fact:
+    _backup_timestamp: "{{ ansible_date_time.iso8601_basic_short }}"
+
+- name: Set backup directory path
+  ansible.builtin.set_fact:
+    cert_backup_path: "{{ cert_backup_base_path }}/{{ _backup_cn }}/{{ _backup_timestamp }}"
+
+- name: Check if current certificate exists
+  ansible.builtin.stat:
+    path: "{{ cert_dest_cert }}"
+  register: _current_cert
+
+- name: Backup existing certificate files
+  when: _current_cert.stat.exists
+  block:
+    - name: Create backup directory
+      ansible.builtin.file:
+        path: "{{ cert_backup_path }}"
+        state: directory
+        mode: "0700"
+        owner: root
+        group: root
+
+    - name: Read existing certificate info
+      community.crypto.x509_certificate_info:
+        path: "{{ cert_dest_cert }}"
+      register: _old_cert_info
+
+    - name: Set old serial number fact
+      ansible.builtin.set_fact:
+        cert_old_serial_number: "{{ _old_cert_info.serial_number }}"
+
+    - name: Copy certificate file to backup
+      ansible.builtin.copy:
+        src: "{{ cert_dest_cert }}"
+        dest: "{{ cert_backup_path }}/cert.pem"
+        remote_src: true
+        mode: "0644"
+
+    - name: Copy private key to backup
+      ansible.builtin.copy:
+        src: "{{ cert_dest_key }}"
+        dest: "{{ cert_backup_path }}/key.pem"
+        remote_src: true
+        mode: "0600"
+      no_log: true
+
+    - name: Copy chain file to backup
+      ansible.builtin.copy:
+        src: "{{ cert_dest_chain }}"
+        dest: "{{ cert_backup_path }}/chain.pem"
+        remote_src: true
+        mode: "0644"
+      ignore_errors: true  # Chain file may not exist on first deployment
+
+    - name: Copy fullchain file to backup (if exists)
+      ansible.builtin.stat:
+        path: "{{ cert_dest_fullchain | default('') }}"
+      register: _fullchain_stat
+      when: cert_dest_fullchain is defined
+
+    - name: Backup fullchain file
+      ansible.builtin.copy:
+        src: "{{ cert_dest_fullchain }}"
+        dest: "{{ cert_backup_path }}/fullchain.pem"
+        remote_src: true
+        mode: "0644"
+      when:
+        - cert_dest_fullchain is defined
+        - _fullchain_stat.stat.exists | default(false)
+
+    - name: Display backup summary
+      ansible.builtin.debug:
+        msg: >-
+          Backup created at {{ cert_backup_path }}
+          (old serial: {{ cert_old_serial_number | default('unknown') }})
+
+- name: Prune old backups beyond retention count
+  when: _current_cert.stat.exists
+  block:
+    - name: List existing backup directories
+      ansible.builtin.find:
+        paths: "{{ cert_backup_base_path }}/{{ _backup_cn }}"
+        file_type: directory
+      register: _backup_dirs
+
+    - name: Remove old backups beyond retention count
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: >-
+        {{ (_backup_dirs.files | sort(attribute='path', reverse=true))[cert_backup_retain_count:] }}
+      loop_control:
+        label: "{{ item.path }}"
+      when: (_backup_dirs.files | length) > cert_backup_retain_count
+
+- name: Handle no existing certificate
+  when: not _current_cert.stat.exists
+  ansible.builtin.debug:
+    msg: "No existing certificate found at {{ cert_dest_cert }} -- skipping backup (fresh deployment)"

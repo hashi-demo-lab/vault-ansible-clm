@@ -1,0 +1,38 @@
+---
+# roles/cert_deploy/tasks/deploy_tomcat.yml
+# Tomcat-specific: fetch keystore password from Vault KV, convert PEM to PKCS12.
+
+- name: Fetch Tomcat keystore password from Vault KV
+  community.hashi_vault.vault_kv2_get:
+    url: "{{ vault_addr }}"
+    auth_method: approle
+    role_id: "{{ vault_role_id }}"
+    secret_id: "{{ vault_secret_id }}"
+    namespace: "{{ vault_namespace | default(omit) }}"
+    engine_mount_point: "{{ tomcat_keystore_password_kv_path | regex_replace('/data/.*$', '') }}"
+    path: "{{ tomcat_keystore_password_kv_path | regex_replace('^.*/data/', '') }}"
+  register: _keystore_password_result
+  no_log: true
+  delegate_to: localhost
+
+- name: Set keystore password fact
+  ansible.builtin.set_fact:
+    _tomcat_keystore_password: "{{ _keystore_password_result.secret[tomcat_keystore_password_kv_key] }}"
+  no_log: true
+
+- name: Convert PEM certificate and key to PKCS12 keystore
+  community.crypto.openssl_pkcs12:
+    action: export
+    path: "{{ tomcat_keystore_path }}"
+    certificate_path: "{{ cert_dest_cert }}"
+    privatekey_path: "{{ cert_dest_key }}"
+    other_certificates_parse_all: true
+    other_certificates: "{{ cert_dest_chain }}"
+    passphrase: "{{ _tomcat_keystore_password }}"
+    friendly_name: "{{ vault_cert_common_name }}"
+    owner: "{{ cert_owner }}"
+    group: "{{ cert_group }}"
+    mode: "0600"
+    state: present
+  notify: "reload tomcat service"
+  no_log: true

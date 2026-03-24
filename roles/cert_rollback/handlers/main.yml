@@ -1,0 +1,14 @@
+---
+# roles/cert_rollback/handlers/main.yml
+
+- name: reload nginx service
+  ansible.builtin.systemd:
+    name: "{{ cert_service_name }}"
+    state: "{{ cert_service_reload_method }}"
+  when: cert_service_type == "nginx"
+
+- name: reload tomcat service
+  ansible.builtin.systemd:
+    name: "{{ cert_service_name }}"
+    state: "{{ cert_service_reload_method }}"
+  when: cert_service_type == "tomcat"

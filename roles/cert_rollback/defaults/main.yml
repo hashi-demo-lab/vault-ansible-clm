@@ -1,0 +1,6 @@
+---
+cert_backup_base_path: /opt/cert_backups
+cert_file_mode: "0644"
+cert_key_mode: "0600"
+cert_owner: root
+cert_group: root

@@ -1,0 +1,68 @@
+---
+# roles/cert_verify/tasks/verify_files.yml
+# Stage 1: Verify cert files exist, permissions are correct, CN/SAN match, not expired.
+
+- name: Check certificate file exists
+  ansible.builtin.stat:
+    path: "{{ cert_dest_cert }}"
+  register: _cert_file
+  failed_when: not _cert_file.stat.exists
+
+- name: Check private key file exists
+  ansible.builtin.stat:
+    path: "{{ cert_dest_key }}"
+  register: _key_file
+  failed_when: not _key_file.stat.exists
+
+- name: Verify certificate file permissions
+  ansible.builtin.assert:
+    that:
+      - _cert_file.stat.mode == cert_file_mode
+      - _cert_file.stat.pw_name == cert_owner
+    fail_msg: >-
+      Certificate file permissions incorrect:
+      mode={{ _cert_file.stat.mode }} (expected {{ cert_file_mode }}),
+      owner={{ _cert_file.stat.pw_name }} (expected {{ cert_owner }})
+    success_msg: "Certificate file permissions OK"
+
+- name: Verify private key file permissions
+  ansible.builtin.assert:
+    that:
+      - _key_file.stat.mode == cert_key_mode
+      - _key_file.stat.pw_name == cert_owner
+    fail_msg: >-
+      Private key file permissions incorrect:
+      mode={{ _key_file.stat.mode }} (expected {{ cert_key_mode }}),
+      owner={{ _key_file.stat.pw_name }} (expected {{ cert_owner }})
+    success_msg: "Private key file permissions OK"
+
+- name: Read deployed certificate info
+  community.crypto.x509_certificate_info:
+    path: "{{ cert_dest_cert }}"
+  register: _deployed_cert_info
+
+- name: Verify certificate common name
+  ansible.builtin.assert:
+    that:
+      - _verify_cn in _deployed_cert_info.subject.commonName
+    fail_msg: >-
+      CN mismatch: deployed={{ _deployed_cert_info.subject.commonName }},
+      expected={{ _verify_cn }}
+    success_msg: "Certificate CN matches: {{ _verify_cn }}"
+
+- name: Verify certificate is not expired
+  ansible.builtin.assert:
+    that:
+      - not _deployed_cert_info.expired
+    fail_msg: "Certificate is expired! Not After: {{ _deployed_cert_info.not_after }}"
+    success_msg: "Certificate is valid until {{ _deployed_cert_info.not_after }}"
+
+- name: Verify issued serial matches deployed (if available)
+  ansible.builtin.assert:
+    that:
+      - issued_serial_number == _deployed_cert_info.serial_number | string
+    fail_msg: >-
+      Serial mismatch: issued={{ issued_serial_number }},
+      deployed={{ _deployed_cert_info.serial_number }}
+    success_msg: "Certificate serial matches: {{ issued_serial_number }}"
+  when: issued_serial_number is defined

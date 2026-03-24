@@ -1,0 +1,40 @@
+---
+# roles/cert_verify/tasks/verify_tls.yml
+# Stage 2: Verify TLS handshake and certificate chain via live connection.
+
+- name: Wait for service port to be ready
+  ansible.builtin.wait_for:
+    host: "{{ inventory_hostname }}"
+    port: "{{ verify_port }}"
+    timeout: 30
+    state: started
+
+- name: Verify TLS handshake with openssl s_client
+  ansible.builtin.command: >
+    openssl s_client
+    -connect {{ inventory_hostname }}:{{ verify_port }}
+    -servername {{ _verify_cn }}
+    -brief
+  register: _tls_handshake
+  changed_when: false
+  failed_when: "'Verification: OK' not in _tls_handshake.stderr"
+  timeout: 15
+
+- name: Verify HTTPS endpoint responds
+  ansible.builtin.uri:
+    url: "https://{{ _verify_cn }}:{{ verify_port }}/"
+    validate_certs: true
+    return_content: false
+    status_code:
+      - 200
+      - 301
+      - 302
+      - 403
+  register: _https_check
+  failed_when: _https_check.status == -1
+
+- name: Display verification summary
+  ansible.builtin.debug:
+    msg: >-
+      TLS verification passed for {{ _verify_cn }}:{{ verify_port }} --
+      handshake OK, HTTPS responding (status {{ _https_check.status }})

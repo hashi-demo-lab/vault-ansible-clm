@@ -1,0 +1,7 @@
+---
+galaxy_info:
+  role_name: cert_verify
+  description: Two-stage certificate verification (file checks + TLS handshake)
+  company: ""
+  min_ansible_version: "2.14"
+dependencies: []

@@ -1,0 +1,48 @@
+---
+# roles/vault_cert_revoke/tasks/main.yml
+# Revoke a certificate in Vault by serial number.
+
+- name: Validate serial number is provided
+  ansible.builtin.assert:
+    that:
+      - revoke_serial_number is defined
+      - revoke_serial_number | length > 0
+    fail_msg: "revoke_serial_number must be provided for certificate revocation"
+
+- name: Revoke certificate in Vault
+  community.hashi_vault.vault_write:
+    url: "{{ vault_addr }}"
+    auth_method: approle
+    role_id: "{{ vault_role_id }}"
+    secret_id: "{{ vault_secret_id }}"
+    namespace: "{{ vault_namespace | default(omit) }}"
+    path: "{{ vault_pki_mount }}/revoke"
+    data:
+      serial_number: "{{ revoke_serial_number }}"
+  register: _revoke_result
+
+- name: Display revocation result
+  ansible.builtin.debug:
+    msg: >-
+      Certificate {{ revoke_serial_number }} revoked successfully.
+      Revocation time: {{ _revoke_result.data.revocation_time | default('set') }}
+
+- name: Tidy certificate store (optional)
+  community.hashi_vault.vault_write:
+    url: "{{ vault_addr }}"
+    auth_method: approle
+    role_id: "{{ vault_role_id }}"
+    secret_id: "{{ vault_secret_id }}"
+    namespace: "{{ vault_namespace | default(omit) }}"
+    path: "{{ vault_pki_mount }}/tidy"
+    data:
+      tidy_cert_store: true
+      tidy_revoked_certs: true
+      safety_buffer: "72h"
+  when: vault_tidy_after_revoke | bool
+  register: _tidy_result
+
+- name: Display tidy result
+  ansible.builtin.debug:
+    msg: "PKI tidy initiated"
+  when: vault_tidy_after_revoke | bool

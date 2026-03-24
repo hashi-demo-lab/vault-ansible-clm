@@ -1,0 +1,3 @@
+---
+vault_pki_mount: pki_int
+vault_tidy_after_revoke: false

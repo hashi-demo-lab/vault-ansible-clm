@@ -1,0 +1,7 @@
+---
+galaxy_info:
+  role_name: cert_monitor
+  description: Monitor certificate expiry and set renewal fact
+  company: ""
+  min_ansible_version: "2.14"
+dependencies: []

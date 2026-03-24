@@ -1,0 +1,13 @@
+---
+# roles/cert_verify/tasks/main.yml
+# Two-stage verification: file/permissions checks, then TLS handshake.
+
+- name: Set verification common name
+  ansible.builtin.set_fact:
+    _verify_cn: "{{ cert_common_name_override | default(vault_cert_common_name, true) }}"
+
+- name: "Stage 1: File and permission checks"
+  ansible.builtin.include_tasks: verify_files.yml
+
+- name: "Stage 2: TLS handshake verification"
+  ansible.builtin.include_tasks: verify_tls.yml

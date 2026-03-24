@@ -1,0 +1,56 @@
+---
+# roles/cert_monitor/tasks/main.yml
+# Read certificate expiry and set cert_needs_renewal fact.
+
+- name: Set monitor common name
+  ansible.builtin.set_fact:
+    _monitor_cn: "{{ cert_common_name_override | default(vault_cert_common_name, true) }}"
+
+- name: Check if certificate file exists
+  ansible.builtin.stat:
+    path: "{{ cert_dest_cert }}"
+  register: _monitor_cert_file
+
+- name: Handle missing certificate
+  when: not _monitor_cert_file.stat.exists
+  block:
+    - name: Set renewal needed for missing certificate
+      ansible.builtin.set_fact:
+        cert_needs_renewal: true
+        cert_days_remaining: 0
+        cert_monitor_status: "missing"
+
+    - name: Report missing certificate
+      ansible.builtin.debug:
+        msg: "Certificate not found at {{ cert_dest_cert }} -- renewal needed"
+
+- name: Check certificate expiry
+  when: _monitor_cert_file.stat.exists
+  block:
+    - name: Read certificate info
+      community.crypto.x509_certificate_info:
+        path: "{{ cert_dest_cert }}"
+      register: _monitor_cert_info
+
+    - name: Calculate days remaining
+      ansible.builtin.set_fact:
+        cert_days_remaining: >-
+          {{ ((_monitor_cert_info.not_after | to_datetime('%Y%m%d%H%M%SZ')) -
+              (ansible_date_time.iso8601 | to_datetime('%Y-%m-%dT%H:%M:%SZ'))).days }}
+
+    - name: Determine if renewal is needed
+      ansible.builtin.set_fact:
+        cert_needs_renewal: "{{ (cert_days_remaining | int) <= (cert_expiry_threshold_days | int) }}"
+        cert_monitor_status: >-
+          {{ 'expired' if (_monitor_cert_info.expired) else
+             ('renewal_needed' if ((cert_days_remaining | int) <= (cert_expiry_threshold_days | int)) else
+              'ok') }}
+
+    - name: Display certificate expiry status
+      ansible.builtin.debug:
+        msg: >-
+          Certificate {{ _monitor_cn }} at {{ cert_dest_cert }}:
+          {{ cert_days_remaining }} days remaining,
+          threshold={{ cert_expiry_threshold_days }} days,
+          status={{ cert_monitor_status }},
+          needs_renewal={{ cert_needs_renewal }}

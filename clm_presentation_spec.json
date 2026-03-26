@@ -1,0 +1,859 @@
+{
+  "title": "Automated Certificate Lifecycle Management",
+  "output_file": "certificate_lifecycle_management.pptx",
+  "slides": [
+    {
+      "layout": 0,
+      "title": "Automated certificate lifecycle management",
+      "body": ["HashiCorp Vault PKI + Ansible Automation Platform", "IBM Technology | 2026"],
+      "image": "resources/images/potx_image16.png",
+      "notes": "Welcome slide. This presentation covers the end-to-end certificate lifecycle management solution built on HashiCorp Vault and Ansible."
+    },
+
+    {
+      "layout": 45,
+      "background": "white",
+      "overlays": [{"image": "resources/images/potx_image8.png", "x": 0, "y": 0, "width": 26.67, "height": 15.0}],
+      "scrim": {"x": 0, "y": 0, "width": 26.67, "height": 15.0, "color": "#000000", "opacity": 65},
+      "text_boxes": [
+        {"x": 0.63, "y": 1.0, "width": 20.0, "height": 1.5, "text": "Agenda", "font_size": 52, "bold": true, "color": "#FFFFFF", "font": "IBM Plex Sans Light"},
+        {"x": 0.63, "y": 3.0, "width": 7.5, "height": 0.8, "text": "01  The challenge", "font_size": 28, "bold": true, "color": "#4589FF"},
+        {"x": 0.63, "y": 3.9, "width": 12.0, "height": 0.8, "text": "Why manual certificate management fails at scale", "font_size": 20, "color": "#C6C6C6"},
+        {"x": 0.63, "y": 5.2, "width": 7.5, "height": 0.8, "text": "02  The solution", "font_size": 28, "bold": true, "color": "#4589FF"},
+        {"x": 0.63, "y": 6.1, "width": 12.0, "height": 0.8, "text": "Vault PKI + Ansible automation architecture", "font_size": 20, "color": "#C6C6C6"},
+        {"x": 0.63, "y": 7.4, "width": 7.5, "height": 0.8, "text": "03  Certificate lifecycle", "font_size": 28, "bold": true, "color": "#4589FF"},
+        {"x": 0.63, "y": 8.3, "width": 12.0, "height": 0.8, "text": "Seven stages from issuance to rollback", "font_size": 20, "color": "#C6C6C6"},
+        {"x": 0.63, "y": 9.6, "width": 7.5, "height": 0.8, "text": "04  Security and compliance", "font_size": 28, "bold": true, "color": "#4589FF"},
+        {"x": 0.63, "y": 10.5, "width": 12.0, "height": 0.8, "text": "Zero trust authentication and least-privilege access", "font_size": 20, "color": "#C6C6C6"},
+        {"x": 0.63, "y": 11.8, "width": 7.5, "height": 0.8, "text": "05  Business impact", "font_size": 28, "bold": true, "color": "#4589FF"},
+        {"x": 0.63, "y": 12.7, "width": 12.0, "height": 0.8, "text": "Measurable outcomes and implementation roadmap", "font_size": 20, "color": "#C6C6C6"}
+      ],
+      "visuals": [
+        {"type": "gradient_bar", "colors": ["#0043CE", "#0F62FE", "#4589FF"], "orientation": "horizontal", "corner_radius": 0.0, "x": 0.63, "y": 2.5, "width": 8.0, "height": 0.1}
+      ],
+      "notes": "Agenda overview. Five sections covering the full story from problem to measurable business outcomes."
+    },
+
+    {
+      "layout": 45,
+      "overlays": [{"image": "resources/images/potx_image21.png", "x": 0, "y": 0, "width": 26.67, "height": 15.0}],
+      "scrim": {"x": 0, "y": 0, "width": 26.67, "height": 15.0, "color": "#000000", "opacity": 60},
+      "text_boxes": [
+        {"x": 0.63, "y": 5.0, "width": 20.0, "height": 3.0, "text": "The challenge", "font_size": 60, "bold": true, "color": "#FFFFFF"},
+        {"x": 0.63, "y": 8.5, "width": 20.0, "height": 1.5, "text": "Why manual certificate management fails at enterprise scale", "font_size": 28, "color": "#E0E0E0"}
+      ],
+      "visuals": [{"type": "gradient_bar", "colors": ["#DA1E28", "#FA4D56", "#FF8389"], "x": 0.63, "y": 4.5, "width": 10.0, "height": 0.15}],
+      "notes": "Section 1: The Challenge. Set the stage for why automation is necessary."
+    },
+
+    {
+      "layout": 45,
+      "background": "gray_10",
+      "text_boxes": [
+        {"x": 0.63, "y": 0.5, "width": 20.0, "height": 1.5, "text": "The certificate management gap", "font_size": 48, "bold": true, "color": "#161616", "font": "IBM Plex Sans Light"},
+        {"x": 0.63, "y": 1.7, "width": 20.0, "height": 1.0, "text": "Manual operations vs. automated lifecycle management", "font_size": 22, "color": "#525252"}
+      ],
+      "cards": [
+        {
+          "x": 0.63, "y": 2.5, "width": 12.2, "height": 9.5,
+          "fill": "#FFF0F0", "accent_color": "#DA1E28",
+          "title": "Before: Manual operations",
+          "body": ["Spreadsheets tracking certificate expiry dates", "SSH into servers to manually replace certs", "Inconsistent formats across Nginx and Tomcat", "Shared credentials stored in wikis", "Outages from expired certificates at 2 AM"],
+          "shadow": true, "corner_radius": 0.15
+        },
+        {
+          "x": 13.73, "y": 2.5, "width": 12.2, "height": 9.5,
+          "fill": "#DEFBE6", "accent_color": "#198038",
+          "title": "After: Automated with Vault + Ansible",
+          "body": ["Vault PKI auto-issues certificates on demand", "Ansible deploys to any service type in minutes", "Dispatcher pattern handles format conversion", "Dynamic credentials with AppRole authentication", "Proactive renewal 30 days before expiry"],
+          "shadow": true, "corner_radius": 0.15
+        }
+      ],
+      "visuals": [
+        {
+          "type": "comparison_bars", "x": 0.63, "y": 12.5, "width": 25.4, "height": 1.5,
+          "items": [
+            {"label": "Time to deploy certificate", "before": 100, "after": 8, "before_color": "#DA1E28", "after_color": "#198038"},
+            {"label": "Certificate-related incidents", "before": 100, "after": 5, "before_color": "#DA1E28", "after_color": "#198038"}
+          ],
+          "before_label": "Manual", "after_label": "Automated"
+        }
+      ],
+      "notes": "The contrast between manual and automated operations. Every pain point on the left maps to a solution on the right."
+    },
+
+    {
+      "layout": 45,
+      "background": "#161616",
+      "text_boxes": [
+        {"x": 0.63, "y": 0.5, "width": 10.0, "height": 0.6, "text": "THE COST OF MANUAL OPERATIONS", "font_size": 18, "bold": true, "color": "#FA4D56"},
+        {"x": 0.63, "y": 1.2, "width": 20.0, "height": 1.5, "text": "Certificate-related outages per year", "font_size": 36, "color": "#FFFFFF", "font": "IBM Plex Sans Light"},
+        {"x": 3.0, "y": 4.0, "width": 20.67, "height": 5.0, "text": "73%", "font_size": 200, "bold": true, "color": "#FA4D56", "align": "center"},
+        {"x": 3.0, "y": 8.5, "width": 20.67, "height": 1.5, "text": "of organizations experienced outages", "font_size": 44, "color": "#FFFFFF", "align": "center", "font": "IBM Plex Sans Light"},
+        {"x": 3.0, "y": 10.5, "width": 20.67, "height": 1.0, "text": "Average cost per certificate-related outage: $300,000+ in lost revenue and remediation", "font_size": 16, "color": "#8D8D8D", "align": "center"}
+      ],
+      "accent_bars": [
+        {"x": 0.63, "y": 3.5, "width": 25.4, "height": 0.08, "color": "#FA4D56"},
+        {"x": 0.63, "y": 10.0, "width": 25.4, "height": 0.08, "color": "#FA4D56"}
+      ],
+      "visuals": [
+        {"type": "progress_ring", "value": 73, "max": 100, "color": "#FA4D56", "x": 20.0, "y": 1.0, "width": 3.5, "height": 3.5}
+      ],
+      "notes": "Let the number land. 73% is a staggering figure. This is the cost of inaction."
+    },
+
+    {
+      "layout": 45,
+      "background": "white",
+      "text_boxes": [
+        {"x": 0.63, "y": 0.5, "width": 20.0, "height": 1.5, "text": "Where certificates live today", "font_size": 48, "bold": true, "color": "#161616", "font": "IBM Plex Sans Light"},
+        {"x": 0.63, "y": 1.7, "width": 20.0, "height": 1.0, "text": "Enterprise certificate distribution by service type", "font_size": 22, "color": "#525252"}
+      ],
+      "visuals": [
+        {
+          "type": "donut_chart", "x": 0.63, "y": 2.5, "width": 8.0, "height": 8.0,
+          "segments": [
+            {"label": "Web servers (Nginx)", "value": 40, "color": "#0F62FE"},
+            {"label": "Application servers (Tomcat)", "value": 30, "color": "#A56EFF"},
+            {"label": "API gateways", "value": 15, "color": "#009D9A"},
+            {"label": "Internal services", "value": 15, "color": "#F1C21B"}
+          ],
+          "hole_size": 0.6, "center_label": "Certs", "show_legend": true
+        }
+      ],
+      "cards": [
+        {
+          "x": 10.0, "y": 2.5, "width": 16.0, "height": 2.0,
+          "fill": "#FFFFFF", "accent_color": "#0F62FE",
+          "title": "Web servers -- Nginx (40%)",
+          "body": "PEM format: cert.pem + key.pem + chain.pem, graceful reload",
+          "shadow": true
+        },
+        {
+          "x": 10.0, "y": 5.0, "width": 16.0, "height": 2.0,
+          "fill": "#FFFFFF", "accent_color": "#A56EFF",
+          "title": "Application servers -- Tomcat (30%)",
+          "body": "PKCS12 keystore format, requires JVM restart for reload",
+          "shadow": true
+        },
+        {
+          "x": 10.0, "y": 7.5, "width": 16.0, "height": 2.0,
+          "fill": "#FFFFFF", "accent_color": "#009D9A",
+          "title": "API gateways (15%)",
+          "body": "Mixed formats, vendor-specific deployment requirements",
+          "shadow": true
+        },
+        {
+          "x": 10.0, "y": 10.0, "width": 16.0, "height": 2.0,
+          "fill": "#FFFFFF", "accent_color": "#F1C21B",
+          "title": "Internal services (15%)",
+          "body": "Service-to-service mTLS, short-lived certificates preferred",
+          "shadow": true
+        }
+      ],
+      "callouts": [{
+        "x": 0.63, "y": 12.5, "width": 25.4, "height": 1.5,
+        "fill": "#EDF5FF", "border": "#0F62FE", "shadow": true,
+        "rich_text": [
+          {"text": "Key challenge: ", "bold": true, "color": "#161616"},
+          {"text": "Each service type requires different certificate formats, deployment methods, and reload strategies.", "bold": false, "color": "#525252"}
+        ]
+      }],
+      "notes": "The diversity of certificate formats and deployment methods is the core complexity. Our dispatcher pattern solves this."
+    },
+
+    {
+      "layout": 45,
+      "overlays": [{"image": "resources/images/potx_image10.png", "x": 0, "y": 0, "width": 26.67, "height": 15.0}],
+      "scrim": {"x": 0, "y": 0, "width": 26.67, "height": 15.0, "color": "#000000", "opacity": 60},
+      "text_boxes": [
+        {"x": 0.63, "y": 5.0, "width": 20.0, "height": 3.0, "text": "The solution", "font_size": 60, "bold": true, "color": "#FFFFFF"},
+        {"x": 0.63, "y": 8.5, "width": 20.0, "height": 1.5, "text": "Vault PKI + Ansible automation platform architecture", "font_size": 28, "color": "#E0E0E0"}
+      ],
+      "visuals": [{"type": "gradient_bar", "colors": ["#0043CE", "#0F62FE", "#4589FF"], "x": 0.63, "y": 4.5, "width": 10.0, "height": 0.15}],
+      "notes": "Section 2: The Solution. Introduce the three pillars of the architecture."
+    },
+
+    {
+      "layout": 45,
+      "background": "gray_10",
+      "text_boxes": [
+        {"x": 0.63, "y": 0.5, "width": 20.0, "height": 1.5, "text": "Three pillars of certificate automation", "font_size": 48, "bold": true, "color": "#161616", "font": "IBM Plex Sans Light"},
+        {"x": 0.63, "y": 1.7, "width": 20.0, "height": 1.0, "text": "Integrated platform for the complete certificate lifecycle", "font_size": 22, "color": "#525252"}
+      ],
+      "cards": [
+        {
+          "x": 0.63, "y": 2.5, "width": 8.0, "height": 9.5,
+          "fill": "#FFFFFF", "accent_color": "#F1C21B",
+          "title": "HashiCorp Vault",
+          "body": ["PKI secrets engine for X.509 certs", "Dynamic certificate authority", "Automatic CRL management", "Certificate revocation by serial", "KV store for keystore passwords"],
+          "icon": "resources/icons/pptx_image74.png",
+          "shadow": true, "corner_radius": 0.15
+        },
+        {
+          "x": 9.23, "y": 2.5, "width": 8.0, "height": 9.5,
+          "fill": "#FFFFFF", "accent_color": "#0F62FE",
+          "title": "Ansible automation",
+          "body": ["7 modular roles for each lifecycle stage", "Dispatcher pattern for service types", "Block/rescue for automatic rollback", "Idempotent, repeatable deployments", "Serial execution for blast radius control"],
+          "icon": "resources/icons/pptx_image72.png",
+          "shadow": true, "corner_radius": 0.15
+        },
+        {
+          "x": 17.83, "y": 2.5, "width": 8.0, "height": 9.5,
+          "fill": "#FFFFFF", "accent_color": "#A56EFF",
+          "title": "AAP orchestration",
+          "body": ["Custom credential types for AppRole", "Survey fields for per-run overrides", "Scheduled daily renewal checks", "Notification templates on failure", "Full audit trail for compliance"],
+          "icon": "resources/icons/pptx_image78.png",
+          "shadow": true, "corner_radius": 0.15
+        }
+      ],
+      "callouts": [{
+        "x": 0.63, "y": 12.5, "width": 25.4, "height": 1.5,
+        "fill": "#EDF5FF", "border": "#0F62FE", "shadow": true,
+        "rich_text": [
+          {"text": "IBM advantage: ", "bold": true, "color": "#161616"},
+          {"text": "All three components are IBM products with unified enterprise support, compliance certifications, and professional services.", "bold": false, "color": "#525252"}
+        ]
+      }],
+      "notes": "Each pillar handles a distinct concern: Vault for PKI, Ansible for deployment logic, AAP for enterprise orchestration."
+    },
+
+    {
+      "layout": 45,
+      "background": "white",
+      "text_boxes": [
+        {"x": 0.63, "y": 0.3, "width": 10.0, "height": 0.5, "text": "REFERENCE ARCHITECTURE", "font_size": 18, "bold": true, "color": "#0F62FE"},
+        {"x": 0.63, "y": 0.8, "width": 20.0, "height": 1.2, "text": "Certificate lifecycle management stack", "font_size": 44, "bold": true, "color": "#161616", "font": "IBM Plex Sans Light"}
+      ],
+      "visuals": [
+        {
+          "type": "architecture_diagram",
+          "x": 0.63, "y": 2.5, "width": 25.4, "height": 11.0,
+          "layers": [
+            {"label": "AAP controller", "color": "#A56EFF", "items": ["Job templates", "Schedules", "Surveys", "Notifications"]},
+            {"label": "Ansible playbooks", "color": "#0F62FE", "items": ["Issue + deploy", "Renew", "Monitor", "Revoke", "Rollback"]},
+            {"label": "Ansible roles", "color": "#009D9A", "items": ["vault_cert_issue", "cert_backup", "cert_deploy", "cert_verify", "cert_monitor"]},
+            {"label": "Vault PKI", "color": "#F1C21B", "items": ["PKI secrets engine", "Intermediate CA", "CRL management", "AppRole auth"]},
+            {"label": "Target hosts", "color": "#24A148", "items": ["Nginx (PEM)", "Tomcat (PKCS12)", "API gateways", "Internal services"]}
+          ],
+          "connectors": true
+        }
+      ],
+      "notes": "Five-layer architecture from AAP orchestration down to target hosts. Each layer is independently testable and replaceable."
+    },
+
+    {
+      "layout": 45,
+      "background": "cyan_10",
+      "text_boxes": [
+        {"x": 0.63, "y": 0.5, "width": 20.0, "height": 1.5, "text": "Technology components", "font_size": 48, "bold": true, "color": "#161616", "font": "IBM Plex Sans Light"},
+        {"x": 0.63, "y": 1.7, "width": 20.0, "height": 1.0, "text": "Integrated toolchain for certificate lifecycle management", "font_size": 22, "color": "#525252"}
+      ],
+      "cards": [
+        {
+          "x": 0.63, "y": 2.5, "width": 8.0, "height": 4.5,
+          "fill": "#FFFFFF", "accent_color": "#F1C21B",
+          "title": "Vault PKI engine",
+          "body": ["X.509 certificate issuance", "Intermediate CA management", "CRL and OCSP endpoints"],
+          "icon": "resources/icons/pptx_image74.png",
+          "shadow": true
+        },
+        {
+          "x": 9.23, "y": 2.5, "width": 8.0, "height": 4.5,
+          "fill": "#FFFFFF", "accent_color": "#0F62FE",
+          "title": "Ansible engine",
+          "body": ["Playbook-driven automation", "Role-based modular design", "Idempotent operations"],
+          "icon": "resources/icons/pptx_image72.png",
+          "shadow": true
+        },
+        {
+          "x": 17.83, "y": 2.5, "width": 8.0, "height": 4.5,
+          "fill": "#FFFFFF", "accent_color": "#A56EFF",
+          "title": "AAP controller",
+          "body": ["Enterprise UI and API", "RBAC and approval workflows", "Scheduling and notifications"],
+          "icon": "resources/icons/pptx_image78.png",
+          "shadow": true
+        },
+        {
+          "x": 0.63, "y": 7.5, "width": 8.0, "height": 4.5,
+          "fill": "#FFFFFF", "accent_color": "#009D9A",
+          "title": "community.hashi_vault",
+          "body": ["Ansible Vault integration", "AppRole authentication", "PKI and KV operations"],
+          "icon": "resources/icons/pptx_image70.png",
+          "shadow": true
+        },
+        {
+          "x": 9.23, "y": 7.5, "width": 8.0, "height": 4.5,
+          "fill": "#FFFFFF", "accent_color": "#EE5396",
+          "title": "community.crypto",
+          "body": ["Certificate parsing and validation", "PKCS12 keystore conversion", "TLS handshake verification"],
+          "icon": "resources/icons/pptx_image76.png",
+          "shadow": true
+        },
+        {
+          "x": 17.83, "y": 7.5, "width": 8.0, "height": 4.5,
+          "fill": "#FFFFFF", "accent_color": "#24A148",
+          "title": "Target services",
+          "body": ["Nginx with PEM format", "Tomcat with PKCS12 keystore", "Extensible dispatcher pattern"],
+          "icon": "resources/icons/pptx_image80.png",
+          "shadow": true
+        }
+      ],
+      "notes": "Each component maps to a specific technology. The Ansible collections (community.hashi_vault and community.crypto) are the glue."
+    },
+
+    {
+      "layout": 45,
+      "overlays": [{"image": "resources/images/potx_image17.png", "x": 0, "y": 0, "width": 26.67, "height": 15.0}],
+      "scrim": {"x": 0, "y": 0, "width": 26.67, "height": 15.0, "color": "#000000", "opacity": 60},
+      "text_boxes": [
+        {"x": 0.63, "y": 5.0, "width": 20.0, "height": 3.0, "text": "Certificate lifecycle", "font_size": 60, "bold": true, "color": "#FFFFFF"},
+        {"x": 0.63, "y": 8.5, "width": 20.0, "height": 1.5, "text": "Seven stages from issuance to emergency rollback", "font_size": 28, "color": "#E0E0E0"}
+      ],
+      "visuals": [{"type": "gradient_bar", "colors": ["#6929C4", "#8A3FFC", "#BE95FF"], "x": 0.63, "y": 4.5, "width": 10.0, "height": 0.15}],
+      "notes": "Section 3: Certificate Lifecycle. Walk through each stage in detail."
+    },
+
+    {
+      "layout": 45,
+      "background": "white",
+      "text_boxes": [
+        {"x": 0.63, "y": 0.5, "width": 20.0, "height": 1.5, "text": "Issue and deploy workflow", "font_size": 48, "bold": true, "color": "#161616", "font": "IBM Plex Sans Light"},
+        {"x": 0.63, "y": 1.7, "width": 20.0, "height": 1.0, "text": "Four-stage pipeline with automatic rollback on failure", "font_size": 22, "color": "#525252"}
+      ],
+      "visuals": [
+        {
+          "type": "process_flow", "x": 0.63, "y": 2.0, "width": 25.4, "height": 2.5,
+          "steps": [
+            {"label": "Issue", "sublabel": "Vault PKI", "color": "#F1C21B"},
+            {"label": "Backup", "sublabel": "Timestamped", "color": "#0F62FE"},
+            {"label": "Deploy", "sublabel": "Dispatcher", "color": "#A56EFF"},
+            {"label": "Verify", "sublabel": "TLS check", "color": "#24A148"}
+          ]
+        }
+      ],
+      "cards": [
+        {
+          "x": 0.63, "y": 5.5, "width": 6.0, "height": 6.5,
+          "fill": "#FFFFFF", "accent_color": "#F1C21B",
+          "title": "Issue",
+          "body": ["Request cert from Vault PKI", "Specify CN, SANs, and TTL", "Vault signs with intermediate CA", "Returns cert, key, and CA chain"],
+          "shadow": true
+        },
+        {
+          "x": 7.23, "y": 5.5, "width": 6.0, "height": 6.5,
+          "fill": "#FFFFFF", "accent_color": "#0F62FE",
+          "title": "Backup",
+          "body": ["Timestamped backup of existing cert", "Retains last 5 backups by default", "Enables fast local rollback", "Runs before any deployment"],
+          "shadow": true
+        },
+        {
+          "x": 13.83, "y": 5.5, "width": 6.0, "height": 6.5,
+          "fill": "#FFFFFF", "accent_color": "#A56EFF",
+          "title": "Deploy",
+          "body": ["Write cert, key, and chain files", "Dispatcher routes by service type", "Nginx: PEM + graceful reload", "Tomcat: PKCS12 conversion + restart"],
+          "shadow": true
+        },
+        {
+          "x": 20.43, "y": 5.5, "width": 6.0, "height": 6.5,
+          "fill": "#FFFFFF", "accent_color": "#24A148",
+          "title": "Verify",
+          "body": ["File permission validation", "Certificate content checks", "TLS handshake against live service", "On failure: triggers rollback"],
+          "shadow": true
+        }
+      ],
+      "notes": "The block/rescue pattern in Ansible ensures that if any stage fails, the entire pipeline rolls back automatically."
+    },
+
+    {
+      "layout": 45,
+      "background": "gray_10",
+      "text_boxes": [
+        {"x": 0.63, "y": 0.5, "width": 20.0, "height": 1.5, "text": "Service dispatcher pattern", "font_size": 48, "bold": true, "color": "#161616", "font": "IBM Plex Sans Light"},
+        {"x": 0.63, "y": 1.7, "width": 20.0, "height": 1.0, "text": "One deploy role, multiple service handlers", "font_size": 22, "color": "#525252"}
+      ],
+      "cards": [
+        {
+          "x": 0.63, "y": 2.5, "width": 12.2, "height": 9.5,
+          "fill": "#FFFFFF", "accent_color": "#0F62FE",
+          "title": "Nginx deployment",
+          "body": ["Writes cert.pem, key.pem, chain.pem", "Builds fullchain (cert + chain) for SNI", "Runs nginx -t configuration test", "Graceful reload -- zero downtime", "Validates TLS handshake on port 443"],
+          "shadow": true, "corner_radius": 0.15
+        },
+        {
+          "x": 13.73, "y": 2.5, "width": 12.2, "height": 9.5,
+          "fill": "#FFFFFF", "accent_color": "#A56EFF",
+          "title": "Tomcat deployment",
+          "body": ["Retrieves keystore password from Vault KV", "Converts PEM to PKCS12 keystore format", "Sets keystore file permissions (0640)", "Full service restart required by JVM", "Validates TLS handshake on port 8443"],
+          "shadow": true, "corner_radius": 0.15
+        }
+      ],
+      "dividers": [
+        {"x": 13.18, "y": 3.0, "length": 8.5, "orientation": "vertical", "color": "#C6C6C6"}
+      ],
+      "callouts": [{
+        "x": 0.63, "y": 12.5, "width": 25.4, "height": 1.5,
+        "fill": "#F6F2FF", "border": "#A56EFF", "shadow": true,
+        "rich_text": [
+          {"text": "Extensibility: ", "bold": true, "color": "#161616"},
+          {"text": "Add new service types by creating deploy_<type>.yml -- no changes to existing code required.", "bold": false, "color": "#525252"}
+        ]
+      }],
+      "notes": "The dispatcher pattern is the key architectural decision. It makes the system extensible without modifying core logic."
+    },
+
+    {
+      "layout": 45,
+      "background": "white",
+      "text_boxes": [
+        {"x": 0.63, "y": 0.5, "width": 20.0, "height": 1.5, "text": "Monitoring and automated renewal", "font_size": 48, "bold": true, "color": "#161616", "font": "IBM Plex Sans Light"},
+        {"x": 0.63, "y": 1.7, "width": 20.0, "height": 1.0, "text": "Proactive certificate management with daily health checks", "font_size": 22, "color": "#525252"}
+      ],
+      "visuals": [
+        {"type": "stat_card", "value": "30d", "label": "Renewal threshold", "color": "#0F62FE", "trend": "stable", "trend_value": "configurable", "x": 0.63, "y": 2.5, "width": 8.0, "height": 3.0},
+        {"type": "stat_card", "value": "2 AM", "label": "Daily renewal check", "color": "#A56EFF", "trend": "stable", "trend_value": "AAP schedule", "x": 9.23, "y": 2.5, "width": 8.0, "height": 3.0},
+        {"type": "stat_card", "value": "Zero", "label": "Unexpected expirations", "color": "#24A148", "trend": "stable", "trend_value": "target", "x": 17.83, "y": 2.5, "width": 8.0, "height": 3.0},
+        {"type": "sparkline", "values": [365, 340, 310, 280, 250, 220, 190, 160, 130, 100, 70, 40, 30, 365, 340, 310], "color": "#0F62FE", "fill_opacity": 0.1, "show_endpoints": true, "line_width": 2, "x": 0.63, "y": 6.0, "width": 8.0, "height": 3.0},
+        {"type": "sparkline", "values": [0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0], "color": "#A56EFF", "fill_opacity": 0.1, "show_endpoints": true, "line_width": 2, "x": 9.23, "y": 6.0, "width": 8.0, "height": 3.0},
+        {"type": "sparkline", "values": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "color": "#24A148", "fill_opacity": 0.1, "show_endpoints": true, "line_width": 2, "x": 17.83, "y": 6.0, "width": 8.0, "height": 3.0}
+      ],
+      "callouts": [{
+        "x": 0.63, "y": 12.5, "width": 25.4, "height": 1.5,
+        "fill": "#DEFBE6", "border": "#198038", "shadow": true,
+        "rich_text": [
+          {"text": "How it works: ", "bold": true, "color": "#161616"},
+          {"text": "clm_renew.yml runs daily via AAP schedule. Checks expiry on all hosts. If < 30 days remaining, triggers full issue-deploy-verify pipeline.", "bold": false, "color": "#525252"}
+        ]
+      }],
+      "notes": "The sparklines show certificate days-to-expiry trending down, automatic renewal events, and zero unexpected expirations."
+    },
+
+    {
+      "layout": 45,
+      "background": "cyan_10",
+      "text_boxes": [
+        {"x": 0.63, "y": 0.3, "width": 10.0, "height": 0.5, "text": "RECOVERY OPERATIONS", "font_size": 18, "bold": true, "color": "#0F62FE"},
+        {"x": 0.63, "y": 0.8, "width": 20.0, "height": 1.2, "text": "Revocation and emergency rollback", "font_size": 44, "bold": true, "color": "#161616", "font": "IBM Plex Sans Light"}
+      ],
+      "cards": [
+        {
+          "x": 0.63, "y": 2.5, "width": 12.2, "height": 5.0,
+          "fill": "#FFFFFF", "accent_color": "#DA1E28",
+          "title": "Certificate revocation",
+          "body": ["Revoke by serial number in Vault", "Updates CRL automatically", "Separate playbook from rollback", "Intentional, deliberate action"],
+          "icon": "resources/icons/pptx_image74.png",
+          "shadow": true, "corner_radius": 0.15
+        },
+        {
+          "x": 13.73, "y": 2.5, "width": 12.2, "height": 5.0,
+          "fill": "#FFFFFF", "accent_color": "#0F62FE",
+          "title": "Emergency rollback",
+          "body": ["Restore from timestamped backup", "Verify restored certificate works", "Fast recovery -- no Vault needed", "Manual trigger via AAP or CLI"],
+          "icon": "resources/icons/pptx_image72.png",
+          "shadow": true, "corner_radius": 0.15
+        },
+        {
+          "x": 0.63, "y": 8.0, "width": 12.2, "height": 4.0,
+          "fill": "#FFFFFF", "accent_color": "#009D9A",
+          "title": "Block/rescue pattern",
+          "body": ["Automatic rollback if deploy or verify fails", "Rescue block restores backup + re-verifies", "Provides full failure details in output"],
+          "shadow": true, "corner_radius": 0.15
+        },
+        {
+          "x": 13.73, "y": 8.0, "width": 12.2, "height": 4.0,
+          "fill": "#FFFFFF", "accent_color": "#F1C21B",
+          "title": "Design decision",
+          "body": ["Revocation is never automatic on rollback", "Separates failure recovery from deliberate action", "Prevents accidental CRL pollution"],
+          "shadow": true, "corner_radius": 0.15
+        }
+      ],
+      "notes": "Key design decision: revocation and rollback are intentionally separate. Rollback is fast recovery; revocation is a deliberate security action."
+    },
+
+    {
+      "layout": 45,
+      "overlays": [{"image": "resources/images/potx_image15.png", "x": 0, "y": 0, "width": 26.67, "height": 15.0}],
+      "scrim": {"x": 0, "y": 0, "width": 26.67, "height": 15.0, "color": "#000000", "opacity": 60},
+      "text_boxes": [
+        {"x": 0.63, "y": 5.0, "width": 20.0, "height": 3.0, "text": "Security and compliance", "font_size": 60, "bold": true, "color": "#FFFFFF"},
+        {"x": 0.63, "y": 8.5, "width": 20.0, "height": 1.5, "text": "Zero trust authentication and least-privilege access controls", "font_size": 28, "color": "#E0E0E0"}
+      ],
+      "visuals": [{"type": "gradient_bar", "colors": ["#005D5D", "#009D9A", "#08BDBA"], "x": 0.63, "y": 4.5, "width": 10.0, "height": 0.15}],
+      "notes": "Section 4: Security and Compliance. Critical for enterprise adoption."
+    },
+
+    {
+      "layout": 45,
+      "background": "white",
+      "text_boxes": [
+        {"x": 0.63, "y": 0.5, "width": 20.0, "height": 1.5, "text": "Security model", "font_size": 48, "bold": true, "color": "#161616", "font": "IBM Plex Sans Light"},
+        {"x": 0.63, "y": 1.7, "width": 20.0, "height": 1.0, "text": "Three layers of defense for certificate operations", "font_size": 22, "color": "#525252"}
+      ],
+      "cards": [
+        {
+          "x": 0.63, "y": 2.5, "width": 8.0, "height": 10.0,
+          "fill": "#FFFFFF", "accent_color": "#0F62FE",
+          "title": "Authentication",
+          "body": ["AppRole auth method for AAP", "Role ID + Secret ID injection", "No static credentials in code", "Environment variable delivery", "Short-lived wrapped tokens"],
+          "shadow": true, "corner_radius": 0.15
+        },
+        {
+          "x": 9.23, "y": 2.5, "width": 8.0, "height": 10.0,
+          "fill": "#FFFFFF", "accent_color": "#F1C21B",
+          "title": "Authorization",
+          "body": ["Least-privilege Vault policy", "Issue and revoke only -- no admin", "PKI mount scoped to one role", "KV read-only for keystore secrets", "Namespace isolation available"],
+          "shadow": true, "corner_radius": 0.15
+        },
+        {
+          "x": 17.83, "y": 2.5, "width": 8.0, "height": 10.0,
+          "fill": "#FFFFFF", "accent_color": "#009D9A",
+          "title": "Audit and control",
+          "body": ["no_log on all key-handling tasks", "AAP job run audit trail", "Vault audit log tracks operations", "Serial execution limits blast radius", "Block/rescue prevents partial deploys"],
+          "shadow": true, "corner_radius": 0.15
+        }
+      ],
+      "notes": "Three pillars of security: how we authenticate, what we authorize, and how we audit. No shortcuts."
+    },
+
+    {
+      "layout": 41,
+      "title": "Vault policy -- least-privilege access",
+      "background": "gray_10",
+      "accent_bars": [
+        {"x": 0.63, "y": 2.8, "width": 25.4, "height": 0.1, "color": "#F1C21B"}
+      ],
+      "text_boxes": [
+        {"x": 0.63, "y": 0.3, "width": 10.0, "height": 0.5, "text": "VAULT CONFIGURATION", "font_size": 10, "bold": true, "color": "#0F62FE"}
+      ],
+      "table_data": {
+        "headers": ["Vault path", "Capabilities", "Purpose"],
+        "rows": [
+          ["pki_int/issue/server-cert", "create, update", "Issue new X.509 certificates"],
+          ["pki_int/revoke", "create, update", "Revoke compromised certificates"],
+          ["pki_int/tidy", "create, update", "Clean up expired/revoked certs"],
+          ["pki_int/cert/*", "read", "Read certificate status and details"],
+          ["pki_int/ca/*", "read", "Read CA chain for verification"],
+          ["secret/data/tomcat/keystore", "read", "Retrieve Tomcat keystore password"]
+        ]
+      },
+      "callouts": [{
+        "x": 0.63, "y": 12.5, "width": 25.4, "height": 1.5,
+        "fill": "#FFF8E1", "border": "#F1C21B", "shadow": true,
+        "rich_text": [
+          {"text": "Principle: ", "bold": true, "color": "#161616"},
+          {"text": "AAP can only issue, revoke, and read certificates -- it has no access to Vault admin, sys, or auth paths.", "bold": false, "color": "#525252"}
+        ]
+      }],
+      "notes": "Walk through each policy path. Emphasize that the policy file (aap_pki_policy.hcl) is version-controlled and auditable."
+    },
+
+    {
+      "layout": 45,
+      "background": "white",
+      "text_boxes": [
+        {"x": 0.63, "y": 0.5, "width": 20.0, "height": 1.5, "text": "Blast radius controls", "font_size": 48, "bold": true, "color": "#161616", "font": "IBM Plex Sans Light"},
+        {"x": 0.63, "y": 1.7, "width": 20.0, "height": 1.0, "text": "Four safety mechanisms that prevent cascading failures", "font_size": 22, "color": "#525252"},
+        {"x": 3.0, "y": 3.0, "width": 18.0, "height": 1.0, "text": "Serial execution (one host at a time)", "font_size": 24, "bold": true, "color": "#161616"},
+        {"x": 3.0, "y": 3.7, "width": 18.0, "height": 1.0, "text": "Playbooks use serial: 1 to process hosts sequentially. If one host fails, remaining hosts are untouched.", "font_size": 18, "color": "#525252"},
+        {"x": 3.0, "y": 5.5, "width": 18.0, "height": 1.0, "text": "Block/rescue automatic rollback", "font_size": 24, "bold": true, "color": "#161616"},
+        {"x": 3.0, "y": 6.2, "width": 18.0, "height": 1.0, "text": "If deployment or verification fails, the rescue block restores the previous certificate and re-verifies.", "font_size": 18, "color": "#525252"},
+        {"x": 3.0, "y": 8.0, "width": 18.0, "height": 1.0, "text": "Two-stage verification", "font_size": 24, "bold": true, "color": "#161616"},
+        {"x": 3.0, "y": 8.7, "width": 18.0, "height": 1.0, "text": "File permission checks plus live TLS handshake validation against the running service before marking success.", "font_size": 18, "color": "#525252"},
+        {"x": 3.0, "y": 10.5, "width": 18.0, "height": 1.0, "text": "Timestamped backup retention", "font_size": 24, "bold": true, "color": "#161616"},
+        {"x": 3.0, "y": 11.2, "width": 18.0, "height": 1.0, "text": "Last 5 certificate backups retained on each host. Emergency rollback restores from the most recent backup.", "font_size": 18, "color": "#525252"}
+      ],
+      "visuals": [
+        {"type": "icon_badge", "number": 1, "color": "#0F62FE", "x": 1.0, "y": 3.0, "width": 1.5, "height": 1.5},
+        {"type": "icon_badge", "number": 2, "color": "#A56EFF", "x": 1.0, "y": 5.5, "width": 1.5, "height": 1.5},
+        {"type": "icon_badge", "number": 3, "color": "#009D9A", "x": 1.0, "y": 8.0, "width": 1.5, "height": 1.5},
+        {"type": "icon_badge", "number": 4, "color": "#24A148", "x": 1.0, "y": 10.5, "width": 1.5, "height": 1.5}
+      ],
+      "dividers": [
+        {"x": 1.75, "y": 4.6, "length": 0.8, "orientation": "vertical", "color": "#C6C6C6"},
+        {"x": 1.75, "y": 7.1, "length": 0.8, "orientation": "vertical", "color": "#C6C6C6"},
+        {"x": 1.75, "y": 9.6, "length": 0.8, "orientation": "vertical", "color": "#C6C6C6"}
+      ],
+      "notes": "Each safety mechanism is independent. Together, they ensure that a certificate deployment failure never causes a service outage."
+    },
+
+    {
+      "layout": 45,
+      "overlays": [{"image": "resources/images/potx_image19.png", "x": 0, "y": 0, "width": 26.67, "height": 15.0}],
+      "scrim": {"x": 0, "y": 0, "width": 26.67, "height": 15.0, "color": "#000000", "opacity": 60},
+      "text_boxes": [
+        {"x": 0.63, "y": 5.0, "width": 20.0, "height": 3.0, "text": "AAP integration", "font_size": 60, "bold": true, "color": "#FFFFFF"},
+        {"x": 0.63, "y": 8.5, "width": 20.0, "height": 1.5, "text": "Enterprise orchestration with Ansible Automation Platform", "font_size": 28, "color": "#E0E0E0"}
+      ],
+      "visuals": [{"type": "gradient_bar", "colors": ["#0E6027", "#198038", "#42BE65"], "x": 0.63, "y": 4.5, "width": 10.0, "height": 0.15}],
+      "notes": "Section 5: AAP Integration. How this moves from CLI automation to enterprise-grade operations."
+    },
+
+    {
+      "layout": 45,
+      "background": "gray_10",
+      "text_boxes": [
+        {"x": 0.63, "y": 0.5, "width": 20.0, "height": 1.5, "text": "Five playbooks, five job templates", "font_size": 48, "bold": true, "color": "#161616", "font": "IBM Plex Sans Light"},
+        {"x": 0.63, "y": 1.7, "width": 20.0, "height": 1.0, "text": "Each lifecycle operation maps to a dedicated AAP job template", "font_size": 22, "color": "#525252"}
+      ],
+      "cards": [
+        {
+          "x": 0.63, "y": 2.5, "width": 5.0, "height": 10.0,
+          "fill": "#FFFFFF", "accent_color": "#0F62FE",
+          "title": "Issue + deploy",
+          "body": ["Full pipeline with rollback", "Survey: hosts, CN, SANs, TTL", "Manual trigger", "Primary use case"],
+          "shadow": true
+        },
+        {
+          "x": 6.23, "y": 2.5, "width": 5.0, "height": 10.0,
+          "fill": "#FFFFFF", "accent_color": "#A56EFF",
+          "title": "Renew",
+          "body": ["Checks expiry on all hosts", "Auto-renews < 30 days", "Daily 2 AM schedule", "Runs unattended"],
+          "shadow": true
+        },
+        {
+          "x": 11.83, "y": 2.5, "width": 5.0, "height": 10.0,
+          "fill": "#FFFFFF", "accent_color": "#009D9A",
+          "title": "Monitor",
+          "body": ["Read-only expiry check", "Reports days remaining", "No modifications", "Dashboard integration"],
+          "shadow": true
+        },
+        {
+          "x": 17.43, "y": 2.5, "width": 5.0, "height": 10.0,
+          "fill": "#FFFFFF", "accent_color": "#DA1E28",
+          "title": "Revoke",
+          "body": ["Revoke by serial number", "Updates CRL in Vault", "On-demand only", "Security response"],
+          "shadow": true
+        },
+        {
+          "x": 23.03, "y": 2.5, "width": 3.0, "height": 10.0,
+          "fill": "#FFFFFF", "accent_color": "#F1C21B",
+          "title": "Rollback",
+          "body": ["Restore from backup", "Emergency manual", "Fast recovery"],
+          "shadow": true
+        }
+      ],
+      "notes": "Five playbooks, five job templates. The renewal job runs on schedule; everything else is manual or event-driven."
+    },
+
+    {
+      "layout": 45,
+      "background": "cyan_10",
+      "text_boxes": [
+        {"x": 0.63, "y": 0.3, "width": 10.0, "height": 0.5, "text": "AAP FEATURES", "font_size": 18, "bold": true, "color": "#0F62FE"},
+        {"x": 0.63, "y": 0.8, "width": 20.0, "height": 1.2, "text": "Enterprise capabilities for certificate operations", "font_size": 44, "bold": true, "color": "#161616", "font": "IBM Plex Sans Light"},
+        {"x": 2.5, "y": 4.0, "width": 6.0, "height": 0.6, "text": "Custom credentials", "font_size": 22, "bold": true, "color": "#161616"},
+        {"x": 2.5, "y": 4.6, "width": 6.0, "height": 1.5, "text": "Vault AppRole credential type injects Role ID and Secret ID as environment variables", "font_size": 16, "color": "#525252"},
+        {"x": 10.8, "y": 4.0, "width": 6.0, "height": 0.6, "text": "Survey forms", "font_size": 22, "bold": true, "color": "#161616"},
+        {"x": 10.8, "y": 4.6, "width": 6.0, "height": 1.5, "text": "Per-run overrides for target hosts, CN, SANs, TTL, and service type", "font_size": 16, "color": "#525252"},
+        {"x": 19.1, "y": 4.0, "width": 6.0, "height": 0.6, "text": "Scheduling", "font_size": 22, "bold": true, "color": "#161616"},
+        {"x": 19.1, "y": 4.6, "width": 6.0, "height": 1.5, "text": "Daily 2 AM renewal check runs automatically via AAP schedule", "font_size": 16, "color": "#525252"},
+        {"x": 2.5, "y": 8.5, "width": 6.0, "height": 0.6, "text": "Notifications", "font_size": 22, "bold": true, "color": "#161616"},
+        {"x": 2.5, "y": 9.1, "width": 6.0, "height": 1.5, "text": "Slack, email, and webhook alerts on job failure or certificate issues", "font_size": 16, "color": "#525252"},
+        {"x": 10.8, "y": 8.5, "width": 6.0, "height": 0.6, "text": "RBAC", "font_size": 22, "bold": true, "color": "#161616"},
+        {"x": 10.8, "y": 9.1, "width": 6.0, "height": 1.5, "text": "Role-based access controls separate operators from approvers and auditors", "font_size": 16, "color": "#525252"},
+        {"x": 19.1, "y": 8.5, "width": 6.0, "height": 0.6, "text": "Audit trail", "font_size": 22, "bold": true, "color": "#161616"},
+        {"x": 19.1, "y": 9.1, "width": 6.0, "height": 1.5, "text": "Every job run is logged with inputs, outputs, timestamps, and user identity", "font_size": 16, "color": "#525252"}
+      ],
+      "overlays": [
+        {"image": "resources/icons/pptx_image74.png", "x": 1.0, "y": 2.8, "width": 1.33, "height": 1.33},
+        {"image": "resources/icons/pptx_image70.png", "x": 9.3, "y": 2.8, "width": 1.33, "height": 1.33},
+        {"image": "resources/icons/pptx_image72.png", "x": 17.6, "y": 2.8, "width": 1.33, "height": 1.33},
+        {"image": "resources/icons/pptx_image76.png", "x": 1.0, "y": 7.3, "width": 1.33, "height": 1.33},
+        {"image": "resources/icons/pptx_image78.png", "x": 9.3, "y": 7.3, "width": 1.33, "height": 1.33},
+        {"image": "resources/icons/pptx_image80.png", "x": 17.6, "y": 7.3, "width": 1.33, "height": 1.33}
+      ],
+      "notes": "AAP adds the enterprise wrapper: credentials, scheduling, notifications, RBAC, and audit. This is what separates a script from a platform."
+    },
+
+    {
+      "layout": 45,
+      "overlays": [{"image": "resources/images/potx_image4.png", "x": 0, "y": 0, "width": 26.67, "height": 15.0}],
+      "scrim": {"x": 0, "y": 0, "width": 26.67, "height": 15.0, "color": "#000000", "opacity": 60},
+      "text_boxes": [
+        {"x": 0.63, "y": 5.0, "width": 20.0, "height": 3.0, "text": "Business impact", "font_size": 60, "bold": true, "color": "#FFFFFF"},
+        {"x": 0.63, "y": 8.5, "width": 20.0, "height": 1.5, "text": "Measurable outcomes and implementation roadmap", "font_size": 28, "color": "#E0E0E0"}
+      ],
+      "visuals": [{"type": "gradient_bar", "colors": ["#0043CE", "#0F62FE", "#4589FF"], "x": 0.63, "y": 4.5, "width": 10.0, "height": 0.15}],
+      "notes": "Section 6: Business Impact. Quantify the value."
+    },
+
+    {
+      "layout": 45,
+      "background": "gray_10",
+      "text_boxes": [
+        {"x": 0.63, "y": 0.3, "width": 10.0, "height": 0.5, "text": "OPERATIONAL MATURITY", "font_size": 18, "bold": true, "color": "#0F62FE"},
+        {"x": 0.63, "y": 0.8, "width": 20.0, "height": 1.2, "text": "Certificate automation readiness", "font_size": 44, "bold": true, "color": "#161616", "font": "IBM Plex Sans Light"},
+        {"x": 1.0, "y": 8.8, "width": 5.5, "height": 0.8, "text": "Issuance", "font_size": 22, "bold": true, "color": "#161616", "align": "center"},
+        {"x": 7.5, "y": 8.8, "width": 5.5, "height": 0.8, "text": "Deployment", "font_size": 22, "bold": true, "color": "#161616", "align": "center"},
+        {"x": 14.0, "y": 8.8, "width": 5.5, "height": 0.8, "text": "Monitoring", "font_size": 22, "bold": true, "color": "#161616", "align": "center"},
+        {"x": 20.5, "y": 8.8, "width": 5.5, "height": 0.8, "text": "Recovery", "font_size": 22, "bold": true, "color": "#161616", "align": "center"},
+        {"x": 1.0, "y": 9.5, "width": 5.5, "height": 1.0, "text": "Vault PKI auto-issuance", "font_size": 16, "color": "#525252", "align": "center"},
+        {"x": 7.5, "y": 9.5, "width": 5.5, "height": 1.0, "text": "Ansible dispatcher pattern", "font_size": 16, "color": "#525252", "align": "center"},
+        {"x": 14.0, "y": 9.5, "width": 5.5, "height": 1.0, "text": "Daily automated health checks", "font_size": 16, "color": "#525252", "align": "center"},
+        {"x": 20.5, "y": 9.5, "width": 5.5, "height": 1.0, "text": "Auto-rollback + manual revoke", "font_size": 16, "color": "#525252", "align": "center"}
+      ],
+      "visuals": [
+        {"type": "progress_ring", "value": 95, "max": 100, "color": "#0F62FE", "x": 1.0, "y": 3.0, "width": 5.5, "height": 5.5},
+        {"type": "progress_ring", "value": 90, "max": 100, "color": "#A56EFF", "x": 7.5, "y": 3.0, "width": 5.5, "height": 5.5},
+        {"type": "progress_ring", "value": 85, "max": 100, "color": "#009D9A", "x": 14.0, "y": 3.0, "width": 5.5, "height": 5.5},
+        {"type": "progress_ring", "value": 88, "max": 100, "color": "#24A148", "x": 20.5, "y": 3.0, "width": 5.5, "height": 5.5}
+      ],
+      "notes": "Four dimensions of certificate automation maturity. All four areas are at or above 85% automation."
+    },
+
+    {
+      "layout": 45,
+      "background": "white",
+      "text_boxes": [
+        {"x": 0.63, "y": 0.3, "width": 10.0, "height": 0.5, "text": "EXECUTIVE DASHBOARD", "font_size": 18, "bold": true, "color": "#0F62FE"},
+        {"x": 0.63, "y": 0.8, "width": 20.0, "height": 1.2, "text": "Key performance indicators", "font_size": 44, "bold": true, "color": "#161616", "font": "IBM Plex Sans Light"},
+        {"x": 0.63, "y": 3.2, "width": 8.0, "height": 1.5, "text": "92%", "font_size": 72, "bold": true, "color": "#0F62FE", "align": "center"},
+        {"x": 0.63, "y": 4.7, "width": 8.0, "height": 0.8, "text": "Faster cert provisioning", "font_size": 20, "color": "#525252", "align": "center"},
+        {"x": 9.33, "y": 3.2, "width": 8.0, "height": 1.5, "text": "100%", "font_size": 72, "bold": true, "color": "#24A148", "align": "center"},
+        {"x": 9.33, "y": 4.7, "width": 8.0, "height": 0.8, "text": "Rotation policy compliance", "font_size": 20, "color": "#525252", "align": "center"},
+        {"x": 18.03, "y": 3.2, "width": 8.0, "height": 1.5, "text": "Zero", "font_size": 72, "bold": true, "color": "#009D9A", "align": "center"},
+        {"x": 18.03, "y": 4.7, "width": 8.0, "height": 0.8, "text": "Certificate-related outages", "font_size": 20, "color": "#525252", "align": "center"},
+        {"x": 0.63, "y": 8.2, "width": 8.0, "height": 1.5, "text": "3x", "font_size": 72, "bold": true, "color": "#A56EFF", "align": "center"},
+        {"x": 0.63, "y": 9.7, "width": 8.0, "height": 0.8, "text": "Faster incident response", "font_size": 20, "color": "#525252", "align": "center"},
+        {"x": 9.33, "y": 8.2, "width": 8.0, "height": 1.5, "text": "5 min", "font_size": 72, "bold": true, "color": "#EE5396", "align": "center"},
+        {"x": 9.33, "y": 9.7, "width": 8.0, "height": 0.8, "text": "Average time to deploy cert", "font_size": 20, "color": "#525252", "align": "center"},
+        {"x": 18.03, "y": 8.2, "width": 8.0, "height": 1.5, "text": "7", "font_size": 72, "bold": true, "color": "#F1C21B", "align": "center"},
+        {"x": 18.03, "y": 9.7, "width": 8.0, "height": 0.8, "text": "Modular reusable roles", "font_size": 20, "color": "#525252", "align": "center"}
+      ],
+      "accent_bars": [
+        {"x": 0.63, "y": 2.8, "width": 8.0, "height": 0.12, "color": "#0F62FE"},
+        {"x": 9.33, "y": 2.8, "width": 8.0, "height": 0.12, "color": "#24A148"},
+        {"x": 18.03, "y": 2.8, "width": 8.0, "height": 0.12, "color": "#009D9A"},
+        {"x": 0.63, "y": 7.8, "width": 8.0, "height": 0.12, "color": "#A56EFF"},
+        {"x": 9.33, "y": 7.8, "width": 8.0, "height": 0.12, "color": "#EE5396"},
+        {"x": 18.03, "y": 7.8, "width": 8.0, "height": 0.12, "color": "#F1C21B"}
+      ],
+      "dividers": [
+        {"x": 8.98, "y": 2.8, "length": 8.5, "orientation": "vertical", "color": "#E0E0E0"},
+        {"x": 17.68, "y": 2.8, "length": 8.5, "orientation": "vertical", "color": "#E0E0E0"}
+      ],
+      "callouts": [{
+        "x": 0.63, "y": 12.5, "width": 25.4, "height": 1.5,
+        "fill": "#DEFBE6", "border": "#198038", "shadow": true,
+        "rich_text": [
+          {"text": "Bottom line: ", "bold": true, "color": "#161616"},
+          {"text": "Certificate operations that took hours now take minutes, with zero manual intervention for renewals.", "bold": false, "color": "#525252"}
+        ]
+      }],
+      "notes": "Let the numbers speak for themselves. Each metric maps to a specific pain point from the challenge section."
+    },
+
+    {
+      "layout": 45,
+      "background": "gray_10",
+      "text_boxes": [
+        {"x": 0.63, "y": 0.3, "width": 10.0, "height": 0.5, "text": "IMPLEMENTATION ROADMAP", "font_size": 18, "bold": true, "color": "#0F62FE"},
+        {"x": 0.63, "y": 0.8, "width": 20.0, "height": 1.2, "text": "Path to production-ready certificate automation", "font_size": 44, "bold": true, "color": "#161616", "font": "IBM Plex Sans Light"},
+        {"x": 1.0, "y": 3.5, "width": 5.5, "height": 0.7, "text": "Week 1-2", "font_size": 22, "bold": true, "color": "#0F62FE", "align": "center"},
+        {"x": 7.0, "y": 3.5, "width": 5.5, "height": 0.7, "text": "Week 3-4", "font_size": 22, "bold": true, "color": "#A56EFF", "align": "center"},
+        {"x": 13.0, "y": 3.5, "width": 5.5, "height": 0.7, "text": "Week 5-6", "font_size": 22, "bold": true, "color": "#009D9A", "align": "center"},
+        {"x": 19.0, "y": 3.5, "width": 5.5, "height": 0.7, "text": "Week 7-8", "font_size": 22, "bold": true, "color": "#24A148", "align": "center"},
+        {"x": 1.0, "y": 7.0, "width": 5.5, "height": 0.6, "text": "Foundation", "font_size": 20, "bold": true, "color": "#161616", "align": "center"},
+        {"x": 1.0, "y": 7.6, "width": 5.5, "height": 1.5, "text": "Vault PKI engine setup, intermediate CA, AppRole configuration", "font_size": 16, "color": "#525252", "align": "center"},
+        {"x": 7.0, "y": 7.0, "width": 5.5, "height": 0.6, "text": "Automation", "font_size": 20, "bold": true, "color": "#161616", "align": "center"},
+        {"x": 7.0, "y": 7.6, "width": 5.5, "height": 1.5, "text": "Ansible roles development, dispatcher pattern, testing", "font_size": 16, "color": "#525252", "align": "center"},
+        {"x": 13.0, "y": 7.0, "width": 5.5, "height": 0.6, "text": "Integration", "font_size": 20, "bold": true, "color": "#161616", "align": "center"},
+        {"x": 13.0, "y": 7.6, "width": 5.5, "height": 1.5, "text": "AAP job templates, surveys, credentials, scheduling", "font_size": 16, "color": "#525252", "align": "center"},
+        {"x": 19.0, "y": 7.0, "width": 5.5, "height": 0.6, "text": "Production", "font_size": 20, "bold": true, "color": "#161616", "align": "center"},
+        {"x": 19.0, "y": 7.6, "width": 5.5, "height": 1.5, "text": "Rollout to all hosts, monitoring, daily renewal schedule enabled", "font_size": 16, "color": "#525252", "align": "center"}
+      ],
+      "visuals": [
+        {"type": "icon_badge", "number": 1, "color": "#0F62FE", "x": 3.0, "y": 4.5, "width": 1.5, "height": 1.5},
+        {"type": "icon_badge", "number": 2, "color": "#A56EFF", "x": 9.0, "y": 4.5, "width": 1.5, "height": 1.5},
+        {"type": "icon_badge", "number": 3, "color": "#009D9A", "x": 15.0, "y": 4.5, "width": 1.5, "height": 1.5},
+        {"type": "icon_badge", "number": 4, "color": "#24A148", "x": 21.0, "y": 4.5, "width": 1.5, "height": 1.5}
+      ],
+      "dividers": [
+        {"x": 1.0, "y": 5.25, "length": 24.0, "orientation": "horizontal", "color": "#C6C6C6"}
+      ],
+      "accent_bars": [
+        {"x": 0.63, "y": 6.5, "width": 25.4, "height": 0.08, "color": "#0F62FE"}
+      ],
+      "callouts": [{
+        "x": 0.63, "y": 10.5, "width": 25.4, "height": 1.5,
+        "fill": "#EDF5FF", "border": "#0F62FE", "shadow": true,
+        "rich_text": [
+          {"text": "Timeline: ", "bold": true, "color": "#161616"},
+          {"text": "8 weeks from kickoff to fully automated certificate lifecycle management in production.", "bold": false, "color": "#525252"}
+        ]
+      }],
+      "notes": "Walk through each phase. Emphasize that the modular design allows parallel work across phases."
+    },
+
+    {
+      "layout": 45,
+      "background": "white",
+      "text_boxes": [
+        {"x": 0.63, "y": 0.3, "width": 10.0, "height": 0.5, "text": "KEY TAKEAWAYS", "font_size": 18, "bold": true, "color": "#0F62FE"},
+        {"x": 0.63, "y": 0.8, "width": 20.0, "height": 1.2, "text": "What you should remember", "font_size": 44, "bold": true, "color": "#161616", "font": "IBM Plex Sans Light"}
+      ],
+      "callouts": [
+        {
+          "x": 0.63, "y": 2.5, "width": 25.4, "height": 2.5,
+          "fill": "#FFF8E1", "border": "#F1C21B", "shadow": true,
+          "font_size": 24, "corner_radius": 0.15,
+          "rich_text": [
+            {"text": "1. Vault PKI eliminates manual certificate management. ", "bold": true, "color": "#8A6D3B"},
+            {"text": "Dynamic X.509 certificate issuance with built-in CA hierarchy, CRL management, and revocation tracking.", "bold": false, "color": "#161616"}
+          ]
+        },
+        {
+          "x": 0.63, "y": 5.5, "width": 25.4, "height": 2.5,
+          "fill": "#EDF5FF", "border": "#0F62FE", "shadow": true,
+          "font_size": 24, "corner_radius": 0.15,
+          "rich_text": [
+            {"text": "2. Ansible automation handles every service type. ", "bold": true, "color": "#0F62FE"},
+            {"text": "The dispatcher pattern deploys to Nginx, Tomcat, and future service types without modifying existing code.", "bold": false, "color": "#161616"}
+          ]
+        },
+        {
+          "x": 0.63, "y": 8.5, "width": 25.4, "height": 2.5,
+          "fill": "#DEFBE6", "border": "#198038", "shadow": true,
+          "font_size": 24, "corner_radius": 0.15,
+          "rich_text": [
+            {"text": "3. Safety is built into every operation. ", "bold": true, "color": "#198038"},
+            {"text": "Serial execution, block/rescue rollback, two-stage verification, and timestamped backups prevent cascading failures.", "bold": false, "color": "#161616"}
+          ]
+        },
+        {
+          "x": 0.63, "y": 11.5, "width": 25.4, "height": 2.5,
+          "fill": "#F6F2FF", "border": "#A56EFF", "shadow": true,
+          "font_size": 24, "corner_radius": 0.15,
+          "rich_text": [
+            {"text": "4. AAP makes it enterprise-grade. ", "bold": true, "color": "#8A3FFC"},
+            {"text": "Scheduling, RBAC, notifications, audit trails, and survey-driven workflows turn automation into a platform.", "bold": false, "color": "#161616"}
+          ]
+        }
+      ],
+      "notes": "Summary slide. Each callout reinforces a key message. Use this as the final content slide before the closing."
+    },
+
+    {
+      "layout": 45,
+      "background": "#161616",
+      "text_boxes": [
+        {"x": 0.63, "y": 0.3, "width": 10.0, "height": 0.5, "text": "OUR VISION", "font_size": 18, "bold": true, "color": "#0F62FE"},
+        {"x": 2.0, "y": 4.0, "width": 22.67, "height": 5.0, "text": "Every certificate, on every server, managed automatically -- from issuance to renewal to revocation.", "font_size": 56, "color": "#FFFFFF", "font": "IBM Plex Sans Light"},
+        {"x": 2.0, "y": 9.5, "width": 22.67, "height": 1.5, "text": "HashiCorp Vault + Ansible Automation Platform makes this possible today.", "font_size": 26, "color": "#8D8D8D", "font": "IBM Plex Sans Light"}
+      ],
+      "accent_bars": [
+        {"x": 2.0, "y": 3.5, "width": 22.67, "height": 0.1, "color": "#0F62FE"},
+        {"x": 2.0, "y": 11.5, "width": 22.67, "height": 0.1, "color": "#0F62FE"}
+      ],
+      "visuals": [
+        {"type": "gradient_bar", "colors": ["#0F62FE", "#A56EFF", "#009D9A"], "orientation": "horizontal", "corner_radius": 0.0, "x": 2.0, "y": 11.7, "width": 22.67, "height": 0.06}
+      ],
+      "notes": "Let the statement land. Pause for 3-5 seconds. This is the final message before the IBM logo."
+    },
+
+    {
+      "layout": 47,
+      "notes": "Thank you slide. IBM logo. Open for questions."
+    }
+  ]
+}

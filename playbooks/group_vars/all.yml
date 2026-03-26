@@ -1,0 +1,43 @@
+---
+# =============================================================================
+# Vault Connection
+# =============================================================================
+vault_addr: "https://vault.hashicorp.local:8200"
+vault_auth_method: approle
+vault_role_id: "{{ lookup('env', 'VAULT_ROLE_ID') }}"
+vault_secret_id: "{{ lookup('env', 'VAULT_SECRET_ID') }}"
+vault_namespace: ""  # Set if using Vault Enterprise namespaces
+
+# =============================================================================
+# PKI Configuration
+# =============================================================================
+vault_pki_mount: pki
+vault_pki_role: server
+vault_cert_ttl: "168h"  # 7 days (server role max_ttl)
+vault_cert_common_name: "{{ inventory_hostname }}"
+vault_cert_alt_names: ""
+vault_cert_ip_sans: ""
+
+# =============================================================================
+# Certificate Defaults
+# =============================================================================
+cert_owner: root
+cert_group: root
+cert_file_mode: "0644"
+cert_key_mode: "0600"
+
+# =============================================================================
+# Backup Configuration
+# =============================================================================
+cert_backup_base_path: /opt/cert_backups
+cert_backup_retain_count: 5
+
+# =============================================================================
+# Monitoring Thresholds
+# =============================================================================
+cert_expiry_threshold_days: 30
+
+# =============================================================================
+# Revocation
+# =============================================================================
+vault_tidy_after_revoke: false

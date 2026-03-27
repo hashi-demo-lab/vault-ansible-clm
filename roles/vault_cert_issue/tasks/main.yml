@@ -21,8 +21,9 @@
     alt_names: "{{ cert_alt_names_override | default(vault_cert_alt_names, true) | default(omit) }}"
     ip_sans: "{{ vault_cert_ip_sans | default(omit) }}"
     ttl: "{{ vault_cert_ttl }}"
+    validate_certs: false
   register: _vault_cert_result
-  no_log: true
+  no_log: false
 
 - name: Set certificate facts
   ansible.builtin.set_fact:

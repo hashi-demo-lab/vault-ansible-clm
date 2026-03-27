@@ -54,7 +54,7 @@
         dest: "{{ cert_backup_path }}/key.pem"
         remote_src: true
         mode: "0600"
-      no_log: true
+      no_log: false
 
     - name: Copy chain file to backup
       ansible.builtin.copy:

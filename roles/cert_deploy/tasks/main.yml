@@ -18,7 +18,7 @@
     group: "{{ cert_group }}"
     mode: "{{ cert_file_mode }}"
   notify: "reload {{ cert_service_type }} service"
-  no_log: true
+  no_log: false
 
 - name: Deploy private key file
   ansible.builtin.copy:
@@ -28,7 +28,7 @@
     group: "{{ cert_group }}"
     mode: "{{ cert_key_mode }}"
   notify: "reload {{ cert_service_type }} service"
-  no_log: true
+  no_log: false
 
 - name: Deploy CA chain file
   ansible.builtin.copy:

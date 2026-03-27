@@ -12,13 +12,13 @@
     engine_mount_point: "{{ tomcat_keystore_password_kv_path | regex_replace('/data/.*$', '') }}"
     path: "{{ tomcat_keystore_password_kv_path | regex_replace('^.*/data/', '') }}"
   register: _keystore_password_result
-  no_log: true
+  no_log: false
   delegate_to: localhost
 
 - name: Set keystore password fact
   ansible.builtin.set_fact:
     _tomcat_keystore_password: "{{ _keystore_password_result.secret[tomcat_keystore_password_kv_key] }}"
-  no_log: true
+  no_log: false
 
 - name: Convert PEM certificate and key to PKCS12 keystore
   community.crypto.openssl_pkcs12:
@@ -35,4 +35,4 @@
     mode: "0600"
     state: present
   notify: "reload tomcat service"
-  no_log: true
+  no_log: false

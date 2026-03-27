@@ -27,6 +27,10 @@
   become: false
   no_log: false
 
+- name: Debug - show Vault PKI response structure
+  ansible.builtin.debug:
+    msg: "Response keys: {{ _vault_cert_result.keys() | list }}, data keys: {{ _vault_cert_result.data.keys() | list if _vault_cert_result.data is mapping else 'NOT A DICT: ' + (_vault_cert_result.data | type_debug) }}"
+
 - name: Set certificate facts
   ansible.builtin.set_fact:
     issued_certificate: "{{ _vault_cert_result.data.certificate }}"
@@ -34,7 +38,7 @@
     issued_ca_chain: "{{ _vault_cert_result.data.ca_chain | join('\n') }}"
     issued_serial_number: "{{ _vault_cert_result.data.serial_number }}"
     issued_fullchain: "{{ _vault_cert_result.data.certificate }}\n{{ _vault_cert_result.data.ca_chain | join('\n') }}"
-  no_log: true
+  no_log: false
 
 - name: Display issued certificate summary (no secrets)
   ansible.builtin.debug:

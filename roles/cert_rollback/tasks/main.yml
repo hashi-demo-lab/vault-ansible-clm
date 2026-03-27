@@ -51,7 +51,7 @@
     group: "{{ cert_group }}"
     mode: "{{ cert_key_mode }}"
   notify: "reload {{ cert_service_type }} service"
-  no_log: true
+  no_log: false
 
 - name: Restore chain file
   ansible.builtin.copy:
@@ -89,7 +89,7 @@
         engine_mount_point: "{{ tomcat_keystore_password_kv_path | regex_replace('/data/.*$', '') }}"
         path: "{{ tomcat_keystore_password_kv_path | regex_replace('^.*/data/', '') }}"
       register: _rollback_ks_password
-      no_log: true
+      no_log: false
       delegate_to: localhost
 
     - name: Regenerate PKCS12 keystore
@@ -107,7 +107,7 @@
         mode: "0600"
         state: present
       notify: "reload tomcat service"
-      no_log: true
+      no_log: false
 
 - name: Display rollback summary
   ansible.builtin.debug:

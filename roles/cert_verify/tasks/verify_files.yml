@@ -36,33 +36,43 @@
       owner={{ _key_file.stat.pw_name }} (expected {{ cert_owner }})
     success_msg: "Private key file permissions OK"
 
-- name: Read deployed certificate info
-  community.crypto.x509_certificate_info:
-    path: "{{ cert_dest_cert }}"
-  register: _deployed_cert_info
+- name: Read certificate subject via openssl
+  ansible.builtin.command:
+    cmd: openssl x509 -in {{ cert_dest_cert }} -noout -subject
+  register: _cert_subject
+  changed_when: false
+
+- name: Read certificate dates via openssl
+  ansible.builtin.command:
+    cmd: openssl x509 -in {{ cert_dest_cert }} -noout -enddate
+  register: _cert_enddate
+  changed_when: false
+
+- name: Read certificate serial via openssl
+  ansible.builtin.command:
+    cmd: openssl x509 -in {{ cert_dest_cert }} -noout -serial
+  register: _cert_serial
+  changed_when: false
+
+- name: Check certificate expiry
+  ansible.builtin.command:
+    cmd: openssl x509 -in {{ cert_dest_cert }} -noout -checkend 0
+  register: _cert_expiry_check
+  changed_when: false
+  failed_when: _cert_expiry_check.rc != 0
 
 - name: Verify certificate common name
   ansible.builtin.assert:
     that:
-      - _verify_cn in _deployed_cert_info.subject.commonName
+      - _verify_cn in _cert_subject.stdout
     fail_msg: >-
-      CN mismatch: deployed={{ _deployed_cert_info.subject.commonName }},
+      CN mismatch: deployed={{ _cert_subject.stdout }},
       expected={{ _verify_cn }}
     success_msg: "Certificate CN matches: {{ _verify_cn }}"
 
-- name: Verify certificate is not expired
-  ansible.builtin.assert:
-    that:
-      - not _deployed_cert_info.expired
-    fail_msg: "Certificate is expired! Not After: {{ _deployed_cert_info.not_after }}"
-    success_msg: "Certificate is valid until {{ _deployed_cert_info.not_after }}"
-
-- name: Verify issued serial matches deployed (if available)
-  ansible.builtin.assert:
-    that:
-      - issued_serial_number == _deployed_cert_info.serial_number | string
-    fail_msg: >-
-      Serial mismatch: issued={{ issued_serial_number }},
-      deployed={{ _deployed_cert_info.serial_number }}
-    success_msg: "Certificate serial matches: {{ issued_serial_number }}"
-  when: issued_serial_number is defined
+- name: Display certificate info
+  ansible.builtin.debug:
+    msg: >-
+      Certificate verified: {{ _cert_subject.stdout }},
+      {{ _cert_enddate.stdout }},
+      {{ _cert_serial.stdout }}

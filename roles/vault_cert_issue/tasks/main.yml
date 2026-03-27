@@ -33,11 +33,11 @@
 
 - name: Set certificate facts
   ansible.builtin.set_fact:
-    issued_certificate: "{{ _vault_cert_result.data.certificate }}"
-    issued_private_key: "{{ _vault_cert_result.data.private_key }}"
-    issued_ca_chain: "{{ _vault_cert_result.data.ca_chain | join('\n') }}"
-    issued_serial_number: "{{ _vault_cert_result.data.serial_number }}"
-    issued_fullchain: "{{ _vault_cert_result.data.certificate }}\n{{ _vault_cert_result.data.ca_chain | join('\n') }}"
+    issued_certificate: "{{ _vault_cert_result.data.data.certificate }}"
+    issued_private_key: "{{ _vault_cert_result.data.data.private_key }}"
+    issued_ca_chain: "{{ _vault_cert_result.data.data.ca_chain | join('\n') }}"
+    issued_serial_number: "{{ _vault_cert_result.data.data.serial_number }}"
+    issued_fullchain: "{{ _vault_cert_result.data.data.certificate }}\n{{ _vault_cert_result.data.data.ca_chain | join('\n') }}"
   no_log: false
 
 - name: Display issued certificate summary (no secrets)

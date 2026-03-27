@@ -17,9 +17,7 @@ server {
     ssl_session_cache shared:SSL:10m;
     ssl_session_tickets off;
 
-    # OCSP stapling (if CA supports it)
-    ssl_stapling on;
-    ssl_stapling_verify on;
+    # CA chain for verification
     ssl_trusted_certificate {{ cert_dest_chain }};
 
     location / {

@@ -23,6 +23,8 @@
     ttl: "{{ vault_cert_ttl }}"
     validate_certs: false
   register: _vault_cert_result
+  delegate_to: localhost
+  become: false
   no_log: false
 
 - name: Set certificate facts

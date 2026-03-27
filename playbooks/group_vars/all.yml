@@ -4,8 +4,8 @@
 # =============================================================================
 vault_addr: "https://vault.hashicorp.local:8200"
 vault_auth_method: approle
-vault_role_id: "{{ lookup('env', 'VAULT_ROLE_ID') }}"
-vault_secret_id: "{{ lookup('env', 'VAULT_SECRET_ID') }}"
+vault_role_id: "{{ role_id }}"
+vault_secret_id: "{{ secret_id }}"
 vault_namespace: ""  # Set if using Vault Enterprise namespaces
 
 # =============================================================================
@@ -14,7 +14,7 @@ vault_namespace: ""  # Set if using Vault Enterprise namespaces
 vault_pki_mount: pki
 vault_pki_role: server
 vault_cert_ttl: "168h"  # 7 days (server role max_ttl)
-vault_cert_common_name: "{{ inventory_hostname }}"
+vault_cert_common_name: "{{ inventory_hostname }}.hashicorp.local"
 vault_cert_alt_names: ""
 vault_cert_ip_sans: ""
 

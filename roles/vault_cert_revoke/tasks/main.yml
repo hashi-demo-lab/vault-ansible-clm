@@ -19,7 +19,10 @@
     path: "{{ vault_pki_mount }}/revoke"
     data:
       serial_number: "{{ revoke_serial_number }}"
+    validate_certs: false
   register: _revoke_result
+  delegate_to: localhost
+  become: false
 
 - name: Display revocation result
   ansible.builtin.debug:
@@ -39,8 +42,11 @@
       tidy_cert_store: true
       tidy_revoked_certs: true
       safety_buffer: "72h"
+    validate_certs: false
   when: vault_tidy_after_revoke | bool
   register: _tidy_result
+  delegate_to: localhost
+  become: false
 
 - name: Display tidy result
   ansible.builtin.debug:

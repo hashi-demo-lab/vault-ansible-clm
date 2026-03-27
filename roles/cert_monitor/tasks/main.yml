@@ -27,24 +27,29 @@
 - name: Check certificate expiry
   when: _monitor_cert_file.stat.exists
   block:
-    - name: Read certificate info
-      community.crypto.x509_certificate_info:
-        path: "{{ cert_dest_cert }}"
-      register: _monitor_cert_info
+    - name: Get certificate end date
+      ansible.builtin.command:
+        cmd: openssl x509 -in {{ cert_dest_cert }} -noout -enddate
+      register: _cert_enddate_raw
+      changed_when: false
 
     - name: Calculate days remaining
-      ansible.builtin.set_fact:
-        cert_days_remaining: >-
-          {{ ((_monitor_cert_info.not_after | to_datetime('%Y%m%d%H%M%SZ')) -
-              (ansible_date_time.iso8601 | to_datetime('%Y-%m-%dT%H:%M:%SZ'))).days }}
+      ansible.builtin.shell:
+        cmd: |
+          end_epoch=$(date -d "$(openssl x509 -in {{ cert_dest_cert }} -noout -enddate | cut -d= -f2)" +%s)
+          now_epoch=$(date +%s)
+          echo $(( (end_epoch - now_epoch) / 86400 ))
+      register: _days_remaining
+      changed_when: false
 
-    - name: Determine if renewal is needed
+    - name: Set monitoring facts
       ansible.builtin.set_fact:
-        cert_needs_renewal: "{{ (cert_days_remaining | int) <= (cert_expiry_threshold_days | int) }}"
+        cert_days_remaining: "{{ _days_remaining.stdout | int }}"
+        cert_needs_renewal: "{{ (_days_remaining.stdout | int) <= (cert_expiry_threshold_days | int) }}"
         cert_monitor_status: >-
-          {{ 'expired' if (_monitor_cert_info.expired) else
-             ('renewal_needed' if ((cert_days_remaining | int) <= (cert_expiry_threshold_days | int)) else
-              'ok') }}
+          {{ 'expired' if (_days_remaining.stdout | int) <= 0
+             else 'renewal_needed' if (_days_remaining.stdout | int) <= (cert_expiry_threshold_days | int)
+             else 'ok' }}
 
     - name: Display certificate expiry status
       ansible.builtin.debug:

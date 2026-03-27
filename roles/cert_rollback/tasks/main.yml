@@ -88,9 +88,11 @@
         namespace: "{{ vault_namespace | default(omit) }}"
         engine_mount_point: "{{ tomcat_keystore_password_kv_path | regex_replace('/data/.*$', '') }}"
         path: "{{ tomcat_keystore_password_kv_path | regex_replace('^.*/data/', '') }}"
+        validate_certs: false
       register: _rollback_ks_password
       no_log: false
       delegate_to: localhost
+      become: false
 
     - name: Regenerate PKCS12 keystore
       community.crypto.openssl_pkcs12:

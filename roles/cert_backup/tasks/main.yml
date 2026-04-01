@@ -111,9 +111,3 @@
   when: not _current_cert.stat.exists
   ansible.builtin.debug:
     msg: "No existing certificate found at {{ cert_dest_cert }} -- skipping backup (fresh deployment)"
-
-- name: Export backup path for AAP workflow
-  ansible.builtin.set_stats:
-    data:
-      cert_backup_path: "{{ cert_backup_path | default('') }}"
-    per_host: true

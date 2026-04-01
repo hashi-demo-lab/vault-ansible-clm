@@ -46,12 +46,3 @@
       Certificate issued for CN={{ _cert_cn }},
       serial={{ issued_serial_number }},
       TTL={{ vault_cert_ttl }}
-
-- name: Export issued certificate data for AAP workflow
-  ansible.builtin.set_stats:
-    data:
-      issued_certificate: "{{ issued_certificate }}"
-      issued_private_key: "{{ issued_private_key }}"
-      issued_ca_chain: "{{ issued_ca_chain }}"
-      issued_serial_number: "{{ issued_serial_number }}"
-    per_host: true

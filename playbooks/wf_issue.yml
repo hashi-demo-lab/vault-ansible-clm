@@ -1,7 +1,8 @@
 ---
 # playbooks/wf_issue.yml
 # AAP Workflow Node: Issue certificate from Vault PKI.
-# Exports issued cert data via set_stats for downstream workflow nodes.
+# Writes issued cert data to a staging directory on each target host
+# so downstream workflow nodes can read it independently per host.
 
 - name: "WF: Issue Certificate"
   hosts: "{{ target_hosts | default('all') }}"
@@ -12,3 +13,37 @@
     - name: Issue certificate from Vault
       ansible.builtin.include_role:
         name: vault_cert_issue
+
+  post_tasks:
+    - name: Create certificate staging directory
+      ansible.builtin.file:
+        path: /tmp/vault_cert_staging
+        state: directory
+        mode: "0700"
+        owner: root
+        group: root
+
+    - name: Write issued certificate to staging
+      ansible.builtin.copy:
+        content: "{{ issued_certificate }}"
+        dest: /tmp/vault_cert_staging/cert.pem
+        mode: "0644"
+
+    - name: Write issued private key to staging
+      ansible.builtin.copy:
+        content: "{{ issued_private_key }}"
+        dest: /tmp/vault_cert_staging/key.pem
+        mode: "0600"
+      no_log: true
+
+    - name: Write issued CA chain to staging
+      ansible.builtin.copy:
+        content: "{{ issued_ca_chain }}"
+        dest: /tmp/vault_cert_staging/chain.pem
+        mode: "0644"
+
+    - name: Write issued serial number to staging
+      ansible.builtin.copy:
+        content: "{{ issued_serial_number }}"
+        dest: /tmp/vault_cert_staging/serial.txt
+        mode: "0644"

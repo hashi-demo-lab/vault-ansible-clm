@@ -1,7 +1,7 @@
 ---
 # playbooks/wf_deploy.yml
 # AAP Workflow Node: Deploy issued certificate to target service.
-# Expects issued cert data from upstream set_stats artifacts.
+# Reads cert data from staging files written by wf_issue.yml.
 
 - name: "WF: Deploy Certificate"
   hosts: "{{ target_hosts | default('all') }}"
@@ -9,13 +9,35 @@
   gather_facts: true
 
   pre_tasks:
-    - name: Import certificate data from workflow artifacts
+    - name: Read certificate from staging
+      ansible.builtin.slurp:
+        src: /tmp/vault_cert_staging/cert.pem
+      register: _staged_cert
+
+    - name: Read private key from staging
+      ansible.builtin.slurp:
+        src: /tmp/vault_cert_staging/key.pem
+      register: _staged_key
+      no_log: true
+
+    - name: Read CA chain from staging
+      ansible.builtin.slurp:
+        src: /tmp/vault_cert_staging/chain.pem
+      register: _staged_chain
+
+    - name: Read serial number from staging
+      ansible.builtin.slurp:
+        src: /tmp/vault_cert_staging/serial.txt
+      register: _staged_serial
+
+    - name: Set certificate facts from staging files
       ansible.builtin.set_fact:
-        issued_certificate: "{{ issued_certificate }}"
-        issued_private_key: "{{ issued_private_key }}"
-        issued_ca_chain: "{{ issued_ca_chain }}"
-        issued_serial_number: "{{ issued_serial_number }}"
-        issued_fullchain: "{{ issued_certificate + '\n' + issued_ca_chain }}"
+        issued_certificate: "{{ _staged_cert.content | b64decode }}"
+        issued_private_key: "{{ _staged_key.content | b64decode }}"
+        issued_ca_chain: "{{ _staged_chain.content | b64decode }}"
+        issued_serial_number: "{{ _staged_serial.content | b64decode }}"
+        issued_fullchain: "{{ _staged_cert.content | b64decode + '\n' + _staged_chain.content | b64decode }}"
+      no_log: true
 
   tasks:
     - name: Deploy certificate to target
@@ -24,3 +46,9 @@
 
     - name: Flush handlers to reload service immediately
       ansible.builtin.meta: flush_handlers
+
+  post_tasks:
+    - name: Clean up certificate staging directory
+      ansible.builtin.file:
+        path: /tmp/vault_cert_staging
+        state: absent

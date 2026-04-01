@@ -115,4 +115,4 @@
   ansible.builtin.set_stats:
     data:
       cert_backup_path: "{{ cert_backup_path | default('') }}"
-    per_host: false
+    per_host: true

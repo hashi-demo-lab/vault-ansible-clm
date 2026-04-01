@@ -54,4 +54,4 @@
       issued_private_key: "{{ issued_private_key }}"
       issued_ca_chain: "{{ issued_ca_chain }}"
       issued_serial_number: "{{ issued_serial_number }}"
-    per_host: false
+    per_host: true

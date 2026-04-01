@@ -37,10 +37,11 @@
         cmd: openssl x509 -in {{ cert_dest_cert }} -noout -serial
       register: _old_cert_serial
       changed_when: false
+      ignore_errors: true
 
     - name: Set old serial number fact
       ansible.builtin.set_fact:
-        cert_old_serial_number: "{{ _old_cert_serial.stdout | regex_replace('^serial=', '') }}"
+        cert_old_serial_number: "{{ _old_cert_serial.stdout | default('serial=unknown') | regex_replace('^serial=', '') }}"
 
     - name: Copy certificate file to backup
       ansible.builtin.copy:

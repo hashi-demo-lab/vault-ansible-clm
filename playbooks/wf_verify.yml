@@ -8,6 +8,6 @@
   gather_facts: true
 
   tasks:
-    - name: Verify certificate deployment
-      ansible.builtin.include_role:
-        name: cert_verify
+    - name: "TEMPORARY: Force failure to test rollback path"
+      ansible.builtin.fail:
+        msg: "Intentional failure to test workflow rollback path"

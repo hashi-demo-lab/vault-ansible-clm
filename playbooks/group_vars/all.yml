@@ -1,19 +1,19 @@
 ---
 # =============================================================================
-# Vault Connection
+# Vault Connection (HCP Vault Dedicated)
 # =============================================================================
-vault_addr: "https://vault.hashicorp.local:8200"
+vault_addr: "https://production.vault.11eb56d6-0f95-3a99-a33c-0242ac110007.aws.hashicorp.cloud:8200"
 vault_auth_method: approle
 vault_role_id: "{{ role_id }}"
 vault_secret_id: "{{ secret_id }}"
-vault_namespace: ""  # Set if using Vault Enterprise namespaces
+vault_namespace: "admin/tfo-apj-demos"
 
 # =============================================================================
-# PKI Configuration
+# PKI Configuration (issuing-ca engine on HCP Vault)
 # =============================================================================
-vault_pki_mount: pki
-vault_pki_role: server
-vault_cert_ttl: "168h"  # 7 days (server role max_ttl)
+vault_pki_mount: issuing-ca
+vault_pki_role: server-certs
+vault_cert_ttl: "720h"  # 30 days (server-certs role max_ttl)
 vault_cert_common_name: "{{ inventory_hostname }}.hashicorp.local"
 vault_cert_alt_names: ""
 vault_cert_ip_sans: ""

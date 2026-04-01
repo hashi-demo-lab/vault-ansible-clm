@@ -1,0 +1,13 @@
+---
+# playbooks/wf_verify.yml
+# AAP Workflow Node: Verify TLS handshake and certificate deployment.
+
+- name: "WF: Verify Certificate"
+  hosts: "{{ target_hosts | default('all') }}"
+  serial: 1
+  gather_facts: true
+
+  tasks:
+    - name: Verify certificate deployment
+      ansible.builtin.include_role:
+        name: cert_verify

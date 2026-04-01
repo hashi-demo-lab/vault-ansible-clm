@@ -1,0 +1,14 @@
+---
+# playbooks/wf_backup.yml
+# AAP Workflow Node: Backup existing certificate before deployment.
+# Exports cert_backup_path via set_stats for downstream workflow nodes.
+
+- name: "WF: Backup Existing Certificate"
+  hosts: "{{ target_hosts | default('all') }}"
+  serial: 1
+  gather_facts: true
+
+  tasks:
+    - name: Backup existing certificate
+      ansible.builtin.include_role:
+        name: cert_backup

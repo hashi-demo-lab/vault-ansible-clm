@@ -1,0 +1,14 @@
+---
+# playbooks/wf_issue.yml
+# AAP Workflow Node: Issue certificate from Vault PKI.
+# Exports issued cert data via set_stats for downstream workflow nodes.
+
+- name: "WF: Issue Certificate"
+  hosts: "{{ target_hosts | default('all') }}"
+  serial: 1
+  gather_facts: true
+
+  tasks:
+    - name: Issue certificate from Vault
+      ansible.builtin.include_role:
+        name: vault_cert_issue

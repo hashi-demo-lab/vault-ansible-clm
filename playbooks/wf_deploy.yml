@@ -1,0 +1,26 @@
+---
+# playbooks/wf_deploy.yml
+# AAP Workflow Node: Deploy issued certificate to target service.
+# Expects issued cert data from upstream set_stats artifacts.
+
+- name: "WF: Deploy Certificate"
+  hosts: "{{ target_hosts | default('all') }}"
+  serial: 1
+  gather_facts: true
+
+  pre_tasks:
+    - name: Import certificate data from workflow artifacts
+      ansible.builtin.set_fact:
+        issued_certificate: "{{ issued_certificate }}"
+        issued_private_key: "{{ issued_private_key }}"
+        issued_ca_chain: "{{ issued_ca_chain }}"
+        issued_serial_number: "{{ issued_serial_number }}"
+        issued_fullchain: "{{ issued_certificate }}\n{{ issued_ca_chain }}"
+
+  tasks:
+    - name: Deploy certificate to target
+      ansible.builtin.include_role:
+        name: cert_deploy
+
+    - name: Flush handlers to reload service immediately
+      ansible.builtin.meta: flush_handlers

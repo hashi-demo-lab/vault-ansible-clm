@@ -1,0 +1,28 @@
+---
+# playbooks/wf_rollback.yml
+# AAP Workflow Node: Rollback to previous certificate and verify.
+# Uses cert_backup_path from upstream set_stats artifacts if available,
+# otherwise auto-discovers the latest backup.
+
+- name: "WF: Rollback Certificate"
+  hosts: "{{ target_hosts | default('all') }}"
+  serial: 1
+  gather_facts: true
+
+  pre_tasks:
+    - name: Import backup path from workflow artifacts
+      ansible.builtin.set_fact:
+        cert_backup_path: "{{ cert_backup_path }}"
+      when: cert_backup_path is defined and cert_backup_path | length > 0
+
+  tasks:
+    - name: Rollback certificate from backup
+      ansible.builtin.include_role:
+        name: cert_rollback
+
+    - name: Flush handlers to reload service after rollback
+      ansible.builtin.meta: flush_handlers
+
+    - name: Verify rollback
+      ansible.builtin.include_role:
+        name: cert_verify

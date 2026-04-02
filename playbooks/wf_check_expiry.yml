@@ -75,6 +75,13 @@
       ansible.builtin.debug:
         msg: "Found {{ _cert_inventory.json.data | default([]) | length }} certificates in inventory (report as of {{ _cert_inventory.json.report_as_of | default('unknown') }})"
 
+    - name: Debug first leaf cert raw data
+      ansible.builtin.debug:
+        msg: "{{ item | to_json }}"
+      loop: "{{ _cert_inventory.json.data | default([]) | selectattr('certificate_type', 'equalto', 'CERTIFICATE_TYPE_LEAF') | list }}"
+      loop_control:
+        label: "{{ item.common_name }}"
+
     # =========================================================================
     # Phase 3: Identify Expiring Certificates
     # =========================================================================

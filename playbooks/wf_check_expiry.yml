@@ -71,18 +71,9 @@
         status_code: 200
       register: _cert_inventory
 
-    - name: Debug API response keys
-      ansible.builtin.debug:
-        msg: "API response keys: {{ _cert_inventory.json.keys() | list }}"
-
     - name: Display certificate inventory count
       ansible.builtin.debug:
-        msg: "Found {{ _cert_inventory.json.data | default([]) | length }} certificates in inventory"
-
-    - name: Debug first certificate fields
-      ansible.builtin.debug:
-        msg: "First cert keys: {{ (_cert_inventory.json.data | first).keys() | list }}, sample: CN={{ (_cert_inventory.json.data | first).common_name | default('?') }}, type={{ (_cert_inventory.json.data | first).certificate_type | default('?') }}, status={{ (_cert_inventory.json.data | first).status | default('?') }}"
-      when: (_cert_inventory.json.data | default([])) | length > 0
+        msg: "Found {{ _cert_inventory.json.data | default([]) | length }} certificates in inventory (report as of {{ _cert_inventory.json.report_as_of | default('unknown') }})"
 
     # =========================================================================
     # Phase 3: Identify Expiring Certificates
@@ -100,9 +91,9 @@
         _expiring_certs: >-
           {{
             _cert_inventory.json.data | default([])
-            | selectattr('certificate_type', 'equalto', 'LEAF')
-            | selectattr('status', 'equalto', 'ACTIVE')
-            | selectattr('valid_until', 'lt', _expiry_cutoff)
+            | selectattr('certificate_type', 'equalto', 'CERTIFICATE_TYPE_LEAF')
+            | selectattr('revoked_at', 'equalto', '')
+            | selectattr('not_after', 'lt', _expiry_cutoff)
             | list
           }}
 
@@ -119,7 +110,7 @@
     - name: Display expiring certificates
       ansible.builtin.debug:
         msg: >-
-          {{ item.common_name }} expires {{ item.valid_until }}
+          {{ item.common_name }} expires {{ item.not_after }}
           (serial: {{ item.serial_number }})
       loop: "{{ _expiring_certs }}"
       loop_control:
@@ -133,7 +124,7 @@
         _all_active_by_cn: >-
           {{
             _cert_inventory.json.data | default([])
-            | selectattr('certificate_type', 'equalto', 'LEAF')
+            | selectattr('certificate_type', 'equalto', 'CERTIFICATE_TYPE_LEAF')
             | selectattr('status', 'equalto', 'ACTIVE')
             | groupby('common_name')
           }}

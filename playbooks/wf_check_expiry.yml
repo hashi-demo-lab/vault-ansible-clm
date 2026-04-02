@@ -125,7 +125,7 @@
           {{
             _cert_inventory.json.data | default([])
             | selectattr('certificate_type', 'equalto', 'CERTIFICATE_TYPE_LEAF')
-            | selectattr('status', 'equalto', 'ACTIVE')
+            | selectattr('revoked_at', 'none')
             | groupby('common_name')
           }}
 

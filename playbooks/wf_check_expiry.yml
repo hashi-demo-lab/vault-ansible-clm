@@ -71,6 +71,10 @@
         status_code: 200
       register: _cert_inventory
 
+    - name: Debug API response keys
+      ansible.builtin.debug:
+        msg: "API response keys: {{ _cert_inventory.json.keys() | list }}"
+
     - name: Display certificate inventory count
       ansible.builtin.debug:
         msg: "Found {{ _cert_inventory.json.certificates | default([]) | length }} certificates in inventory"

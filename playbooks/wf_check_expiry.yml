@@ -77,7 +77,12 @@
 
     - name: Display certificate inventory count
       ansible.builtin.debug:
-        msg: "Found {{ _cert_inventory.json.certificates | default([]) | length }} certificates in inventory"
+        msg: "Found {{ _cert_inventory.json.data | default([]) | length }} certificates in inventory"
+
+    - name: Debug first certificate fields
+      ansible.builtin.debug:
+        msg: "First cert keys: {{ (_cert_inventory.json.data | first).keys() | list }}, sample: CN={{ (_cert_inventory.json.data | first).common_name | default('?') }}, type={{ (_cert_inventory.json.data | first).certificate_type | default('?') }}, status={{ (_cert_inventory.json.data | first).status | default('?') }}"
+      when: (_cert_inventory.json.data | default([])) | length > 0
 
     # =========================================================================
     # Phase 3: Identify Expiring Certificates
@@ -94,7 +99,7 @@
       ansible.builtin.set_fact:
         _expiring_certs: >-
           {{
-            _cert_inventory.json.certificates | default([])
+            _cert_inventory.json.data | default([])
             | selectattr('certificate_type', 'equalto', 'LEAF')
             | selectattr('status', 'equalto', 'ACTIVE')
             | selectattr('valid_until', 'lt', _expiry_cutoff)
@@ -127,7 +132,7 @@
       ansible.builtin.set_fact:
         _all_active_by_cn: >-
           {{
-            _cert_inventory.json.certificates | default([])
+            _cert_inventory.json.data | default([])
             | selectattr('certificate_type', 'equalto', 'LEAF')
             | selectattr('status', 'equalto', 'ACTIVE')
             | groupby('common_name')

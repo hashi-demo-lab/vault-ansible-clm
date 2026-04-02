@@ -4,8 +4,8 @@
 # =============================================================================
 vault_addr: "https://production.vault.11eb56d6-0f95-3a99-a33c-0242ac110007.aws.hashicorp.cloud:8200"
 vault_auth_method: approle
-vault_role_id: "{{ role_id }}"
-vault_secret_id: "{{ secret_id }}"
+vault_role_id: "{{ hcp_vault_role_id }}"
+vault_secret_id: "{{ hcp_vault_secret_id }}"
 vault_namespace: "admin/tfo-apj-demos"
 
 # =============================================================================

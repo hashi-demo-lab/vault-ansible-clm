@@ -1,0 +1,295 @@
+---
+# playbooks/wf_check_expiry.yml
+# AAP Workflow Node: Query HCP Vault Certificates Inventory for expiring certs.
+# Populates a renewal inventory with hosts needing certificate renewal.
+#
+# Required credentials:
+#   - HCP Service Principal (hcp_client_id, hcp_client_secret)
+#   - Red Hat Ansible Automation Platform (controller auth)
+#
+# Configurable variables (via survey or extra_vars):
+#   - source_inventory_name: AAP inventory to look up ansible_host (required)
+#   - cert_expiry_threshold_days: Days before expiry to trigger (default: 7)
+#   - renewal_inventory_name: Inventory to populate (default: CLM Renewal Targets)
+
+- name: "WF: Check Certificate Expiry"
+  hosts: localhost
+  connection: local
+  gather_facts: true
+
+  vars:
+    # HCP API configuration
+    hcp_auth_url: "https://auth.idp.hashicorp.com/oauth2/token"
+    hcp_api_base: "https://api.cloud.hashicorp.com"
+    hcp_org_id: "11eb56d6-0f3b-54a4-a33c-0242ac110007"
+    hcp_project_id: "11eb56d6-0f95-3a99-a33c-0242ac110007"
+    hcp_cluster_name: "production"
+
+    # Renewal configuration
+    cert_expiry_threshold_days: 7
+    renewal_inventory_name: "CLM Renewal Targets"
+    cert_domain: "hashicorp.local"
+
+    # AAP controller connection (auto-discovered in AAP, override for testing)
+    controller_host: "{{ lookup('env', 'CONTROLLER_HOST') | default('https://aap-aap.apps.openshift-01.hashicorp.local', true) }}"
+    controller_oauthtoken: "{{ lookup('env', 'CONTROLLER_OAUTH_TOKEN') | default(omit, true) }}"
+
+  tasks:
+    # =========================================================================
+    # Phase 1: Authenticate to HCP
+    # =========================================================================
+    - name: Obtain HCP API token
+      ansible.builtin.uri:
+        url: "{{ hcp_auth_url }}"
+        method: POST
+        body_format: form-urlencoded
+        body:
+          client_id: "{{ hcp_client_id }}"
+          client_secret: "{{ hcp_client_secret }}"
+          grant_type: client_credentials
+          audience: "https://api.hashicorp.cloud"
+        status_code: 200
+      register: _hcp_auth
+      no_log: true
+
+    - name: Set HCP token fact
+      ansible.builtin.set_fact:
+        _hcp_token: "{{ _hcp_auth.json.access_token }}"
+      no_log: true
+
+    # =========================================================================
+    # Phase 2: Query HCP Certificates Inventory
+    # =========================================================================
+    - name: Query HCP Vault certificates inventory
+      ansible.builtin.uri:
+        url: >-
+          {{ hcp_api_base }}/vault-reporting/2025-05-05/organizations/{{ hcp_org_id }}/projects/{{ hcp_project_id }}/clusters/{{ hcp_cluster_name }}/reports/certificates-inventory?pagination.page_size=200
+        method: GET
+        headers:
+          Authorization: "Bearer {{ _hcp_token }}"
+        status_code: 200
+      register: _cert_inventory
+
+    - name: Display certificate inventory count
+      ansible.builtin.debug:
+        msg: "Found {{ _cert_inventory.json.certificates | default([]) | length }} certificates in inventory"
+
+    # =========================================================================
+    # Phase 3: Identify Expiring Certificates
+    # =========================================================================
+    - name: Calculate expiry threshold timestamp
+      ansible.builtin.set_fact:
+        _expiry_cutoff: "{{ '%Y-%m-%dT%H:%M:%SZ' | strftime(ansible_date_time.epoch | int + (cert_expiry_threshold_days | int * 86400)) }}"
+
+    - name: Display expiry cutoff
+      ansible.builtin.debug:
+        msg: "Looking for certificates expiring before {{ _expiry_cutoff }}"
+
+    - name: Filter expiring active leaf certificates
+      ansible.builtin.set_fact:
+        _expiring_certs: >-
+          {{
+            _cert_inventory.json.certificates | default([])
+            | selectattr('certificate_type', 'equalto', 'LEAF')
+            | selectattr('status', 'equalto', 'ACTIVE')
+            | selectattr('valid_until', 'lt', _expiry_cutoff)
+            | list
+          }}
+
+    - name: End play if no certificates expiring
+      when: _expiring_certs | length == 0
+      block:
+        - name: No expiring certificates
+          ansible.builtin.debug:
+            msg: "No certificates expiring within {{ cert_expiry_threshold_days }} days. Nothing to renew."
+
+        - name: End play early
+          ansible.builtin.meta: end_play
+
+    - name: Display expiring certificates
+      ansible.builtin.debug:
+        msg: >-
+          {{ item.common_name }} expires {{ item.valid_until }}
+          (serial: {{ item.serial_number }})
+      loop: "{{ _expiring_certs }}"
+      loop_control:
+        label: "{{ item.common_name }}"
+
+    # =========================================================================
+    # Phase 4: Detect Duplicate Certificates
+    # =========================================================================
+    - name: Group all active leaf certs by CN for duplicate detection
+      ansible.builtin.set_fact:
+        _all_active_by_cn: >-
+          {{
+            _cert_inventory.json.certificates | default([])
+            | selectattr('certificate_type', 'equalto', 'LEAF')
+            | selectattr('status', 'equalto', 'ACTIVE')
+            | groupby('common_name')
+          }}
+
+    - name: Warn about duplicate certificates
+      ansible.builtin.debug:
+        msg: >-
+          WARNING: {{ item.0 }} has {{ item.1 | length }} active certificates.
+          Serials: {{ item.1 | map(attribute='serial_number') | list }}.
+          The deployed certificate will be identified and renewed; orphans should be investigated.
+      loop: "{{ _all_active_by_cn }}"
+      loop_control:
+        label: "{{ item.0 }}"
+      when: item.1 | length > 1
+
+    # =========================================================================
+    # Phase 5: Extract unique hostnames and look up source inventory
+    # =========================================================================
+    - name: Extract unique hostnames from expiring certificates
+      ansible.builtin.set_fact:
+        _expiring_hostnames: >-
+          {{
+            _expiring_certs
+            | map(attribute='common_name')
+            | map('regex_replace', '\.' + cert_domain + '$', '')
+            | unique
+            | list
+          }}
+
+    - name: Display hosts needing renewal
+      ansible.builtin.debug:
+        msg: "Hosts needing renewal: {{ _expiring_hostnames | join(', ') }}"
+
+    - name: Look up host details from source inventory via API
+      ansible.builtin.uri:
+        url: "{{ controller_host }}/api/controller/v2/inventories/{{ source_inventory_id }}/hosts/?name={{ item }}"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ controller_oauthtoken }}"
+        validate_certs: false
+        status_code: 200
+      register: _source_hosts_lookup
+      loop: "{{ _expiring_hostnames }}"
+      loop_control:
+        label: "{{ item }}"
+
+    - name: Build host details map
+      ansible.builtin.set_fact:
+        _host_details: >-
+          {{
+            _host_details | default({}) | combine({
+              item.item: {
+                'ansible_host': (item.json.results[0].variables | from_json).ansible_host | default(''),
+                'cert_service_type': (item.json.results[0].variables | from_json).cert_service_type | default('nginx')
+              }
+            })
+          }}
+      loop: "{{ _source_hosts_lookup.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+      when: item.json.count > 0
+
+    # =========================================================================
+    # Phase 6: Populate Renewal Inventory
+    # =========================================================================
+    - name: Ensure CLM Renewal Targets inventory exists
+      ansible.controller.inventory:
+        name: "{{ renewal_inventory_name }}"
+        organization: Default
+        description: "Auto-populated by CLM expiry check — hosts needing certificate renewal"
+        state: present
+        controller_host: "{{ controller_host }}"
+        controller_oauthtoken: "{{ controller_oauthtoken }}"
+        validate_certs: false
+
+    - name: Ensure web_server group exists
+      ansible.controller.group:
+        name: web_server
+        inventory: "{{ renewal_inventory_name }}"
+        state: present
+        controller_host: "{{ controller_host }}"
+        controller_oauthtoken: "{{ controller_oauthtoken }}"
+        validate_certs: false
+
+    - name: Ensure tomcat group exists
+      ansible.controller.group:
+        name: tomcat
+        inventory: "{{ renewal_inventory_name }}"
+        state: present
+        controller_host: "{{ controller_host }}"
+        controller_oauthtoken: "{{ controller_oauthtoken }}"
+        validate_certs: false
+
+    - name: Add expiring hosts to renewal inventory
+      ansible.controller.host:
+        name: "{{ item }}"
+        inventory: "{{ renewal_inventory_name }}"
+        state: present
+        variables:
+          ansible_host: "{{ _host_details[item].ansible_host }}"
+          cert_service_type: "{{ _host_details[item].cert_service_type }}"
+          cert_expiring: true
+          cert_expiry_serials: >-
+            {{ _expiring_certs
+               | selectattr('common_name', 'equalto', item + '.' + cert_domain)
+               | map(attribute='serial_number')
+               | list }}
+        controller_host: "{{ controller_host }}"
+        controller_oauthtoken: "{{ controller_oauthtoken }}"
+        validate_certs: false
+      loop: "{{ _expiring_hostnames }}"
+      loop_control:
+        label: "{{ item }}"
+      when: _host_details[item] is defined
+
+    - name: Add hosts to correct service group
+      ansible.controller.host:
+        name: "{{ item }}"
+        inventory: "{{ renewal_inventory_name }}"
+        state: present
+        controller_host: "{{ controller_host }}"
+        controller_oauthtoken: "{{ controller_oauthtoken }}"
+        validate_certs: false
+      loop: "{{ _expiring_hostnames }}"
+      loop_control:
+        label: "{{ item }}"
+      when: _host_details[item] is defined
+      register: _host_add_result
+
+    - name: Associate hosts with web_server group
+      ansible.controller.group:
+        name: web_server
+        inventory: "{{ renewal_inventory_name }}"
+        hosts:
+          - "{{ item }}"
+        state: present
+        controller_host: "{{ controller_host }}"
+        controller_oauthtoken: "{{ controller_oauthtoken }}"
+        validate_certs: false
+      loop: "{{ _expiring_hostnames }}"
+      loop_control:
+        label: "{{ item }}"
+      when:
+        - _host_details[item] is defined
+        - _host_details[item].cert_service_type == 'nginx'
+
+    - name: Associate hosts with tomcat group
+      ansible.controller.group:
+        name: tomcat
+        inventory: "{{ renewal_inventory_name }}"
+        hosts:
+          - "{{ item }}"
+        state: present
+        controller_host: "{{ controller_host }}"
+        controller_oauthtoken: "{{ controller_oauthtoken }}"
+        validate_certs: false
+      loop: "{{ _expiring_hostnames }}"
+      loop_control:
+        label: "{{ item }}"
+      when:
+        - _host_details[item] is defined
+        - _host_details[item].cert_service_type == 'tomcat'
+
+    - name: Display renewal summary
+      ansible.builtin.debug:
+        msg: >-
+          Populated '{{ renewal_inventory_name }}' with {{ _expiring_hostnames | length }} hosts:
+          {{ _expiring_hostnames | join(', ') }}.
+          Ready for CLM renewal workflow.

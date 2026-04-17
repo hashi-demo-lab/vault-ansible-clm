@@ -36,40 +36,77 @@ env:
 
 ## Job Templates
 
-### CLM Issue and Deploy (POC -- single playbook with block/rescue)
+One Job Template per workflow-node playbook. These are chained together
+in a Workflow Template (next section). Each Job Template passes certificate
+data to the next via `set_stats`; the staging directory `/tmp/vault_cert_staging/`
+on each target host carries the current cert between nodes.
+
+### CLM - Issue Certificate
 
 | Field | Value |
 |-------|-------|
-| Name | CLM - Issue and Deploy Certificate |
+| Name | CLM - Issue Certificate |
 | Inventory | CLM Hosts |
 | Project | Certificate Lifecycle Management |
-| Playbook | playbooks/clm_issue_deploy.yml |
-| Credentials | Vault AppRole, Machine (SSH) |
-| Extra Variables | (from Survey) |
-| Verbosity | 0 - Normal |
+| Playbook | playbooks/wf_issue.yml |
+| Credentials | Vault AppRole |
+| Extra Variables | (from Workflow or Survey) |
 
-### CLM Renewal Check
+### CLM - Backup Existing Certificate
 
 | Field | Value |
 |-------|-------|
-| Name | CLM - Renewal Check |
+| Name | CLM - Backup Existing |
 | Inventory | CLM Hosts |
 | Project | Certificate Lifecycle Management |
-| Playbook | playbooks/clm_renew.yml |
+| Playbook | playbooks/wf_backup.yml |
+| Credentials | Machine (SSH) |
+
+### CLM - Deploy Certificate
+
+| Field | Value |
+|-------|-------|
+| Name | CLM - Deploy Certificate |
+| Inventory | CLM Hosts |
+| Project | Certificate Lifecycle Management |
+| Playbook | playbooks/wf_deploy.yml |
+| Credentials | Machine (SSH) |
+
+### CLM - Verify TLS Handshake
+
+| Field | Value |
+|-------|-------|
+| Name | CLM - Verify TLS |
+| Inventory | CLM Hosts |
+| Project | Certificate Lifecycle Management |
+| Playbook | playbooks/wf_verify.yml |
+| Credentials | Machine (SSH) |
+
+### CLM - Rollback (workflow node)
+
+| Field | Value |
+|-------|-------|
+| Name | CLM - Rollback |
+| Inventory | CLM Hosts |
+| Project | Certificate Lifecycle Management |
+| Playbook | playbooks/wf_rollback.yml |
+| Credentials | Machine (SSH) |
+
+### CLM - Daily Expiry Check
+
+| Field | Value |
+|-------|-------|
+| Name | CLM - Daily Expiry Check |
+| Inventory | CLM Hosts |
+| Project | Certificate Lifecycle Management |
+| Playbook | playbooks/wf_check_expiry.yml |
 | Credentials | Vault AppRole, Machine (SSH) |
 | Schedule | Daily at 02:00 |
 
-### CLM Monitor Only
+Queries Vault's Certificates Inventory for expiring leaf certs, builds the
+dynamic inventory of renewal targets, and feeds the issue/deploy workflow.
 
-| Field | Value |
-|-------|-------|
-| Name | CLM - Monitor Expiry |
-| Inventory | CLM Hosts |
-| Project | Certificate Lifecycle Management |
-| Playbook | playbooks/clm_monitor.yml |
-| Credentials | Machine (SSH) |
-
-### CLM Revoke
+### CLM - Manual Revoke (standalone)
 
 | Field | Value |
 |-------|-------|
@@ -80,7 +117,7 @@ env:
 | Credentials | Vault AppRole |
 | Extra Variables | `revoke_serial_number` (from Survey) |
 
-### CLM Rollback
+### CLM - Manual Rollback (standalone)
 
 | Field | Value |
 |-------|-------|
@@ -90,27 +127,10 @@ env:
 | Playbook | playbooks/clm_rollback.yml |
 | Credentials | Machine (SSH) |
 
-## Survey Configuration (Issue and Deploy)
+## Workflow Template: Issue → Deploy → Verify
 
-| Field | Type | Variable | Default | Required |
-|-------|------|----------|---------|----------|
-| Target Hosts | Text | `target_hosts` | `all` | Yes |
-| Common Name Override | Text | `cert_common_name_override` | (empty) | No |
-| Alt Names Override | Text | `cert_alt_names_override` | (empty) | No |
-| Certificate TTL | Multiple Choice | `vault_cert_ttl` | `8760h` | Yes |
-| | | | Choices: `720h`, `2160h`, `4380h`, `8760h` | |
-| Service Type | Multiple Choice | `cert_service_type` | (empty) | No |
-| | | | Choices: `nginx`, `tomcat` | |
-
-## Survey Configuration (Revoke)
-
-| Field | Type | Variable | Default | Required |
-|-------|------|----------|---------|----------|
-| Certificate Serial Number | Text | `revoke_serial_number` | (empty) | Yes |
-
-## Workflow Template (Production)
-
-For production, split into per-stage Job Templates connected in AAP Workflow:
+The end-to-end issuance workflow chains five Job Templates with block/rescue
+semantics — `wf_verify` failure triggers `wf_rollback`:
 
 ```
 [Issue Cert] → (success) → [Backup Existing] → (success) → [Deploy Cert]
@@ -119,7 +139,7 @@ For production, split into per-stage Job Templates connected in AAP Workflow:
                                                        |                     |
                                                   (success)             (failure)
                                                        |                     |
-                                                [Verify Cert]          [Rollback]
+                                                [Verify TLS]          [Rollback]
                                                        |                     |
                                                   (success)             (success)
                                                        |                     |
@@ -128,7 +148,57 @@ For production, split into per-stage Job Templates connected in AAP Workflow:
                                                                    [Failure Email]
 ```
 
-> **Note**: Production workflow requires `set_stats` module in each playbook to pass variables (cert data, serial number, backup path) between Job Template nodes. The POC avoids this complexity by handling everything in a single playbook.
+Extra Variables set on the Workflow Template cascade to every child Job
+Template — only the ones that consume them actually use them (e.g. `vault_pki_role`
+is consumed only by `wf_issue.yml`).
+
+## Survey Configuration (Workflow: Issue → Deploy)
+
+| Field | Type | Variable | Default | Required |
+|-------|------|----------|---------|----------|
+| Target Hosts | Text | `target_hosts` | `all` | Yes |
+| Common Name Override | Text | `cert_common_name_override` | (empty) | No |
+| Alt Names Override | Text | `cert_alt_names_override` | (empty) | No |
+| Certificate TTL | Multiple Choice | `vault_cert_ttl` | `720h` | Yes |
+| | | | Choices: `5m`, `720h`, `2160h`, `4380h`, `8760h` | |
+| Service Type | Multiple Choice | `cert_service_type` | (empty) | No |
+| | | | Choices: `nginx`, `tomcat` | |
+
+## Using the Demo Role (5-minute certs for live demos)
+
+To issue from the `demo-certs` Vault role instead of the default `server-certs`,
+override these two Extra Variables when launching the Workflow (tick **Prompt
+on launch** on the Extra Variables field so you can toggle this per-run):
+
+```yaml
+vault_pki_role: demo-certs
+vault_cert_ttl: 5m
+```
+
+Vault role constraints for `demo-certs`:
+
+| Setting | Value |
+|---------|-------|
+| `ttl` | 300s (5 minutes) |
+| `max_ttl` | 600s (10 minutes) |
+
+Common TTL choices for demos:
+
+| `vault_cert_ttl` | Effect |
+|------------------|--------|
+| `5m` | Standard demo |
+| `9m` | Edge-of-policy drama (watch the monitor pick it up just before `max_ttl`) |
+| `2m`–`3m` | Cert expires during the live presentation — tight but reliable |
+
+Role definitions live in `terraform-vault-tfo-apj-demo-admin/modules/pki/issuing/main.tf`.
+The mount path is `issuing-ca` for all four roles (`server-certs`, `client-certs`,
+`application-certs`, `demo-certs`), so `vault_pki_mount` doesn't need overriding.
+
+## Survey Configuration (Revoke)
+
+| Field | Type | Variable | Default | Required |
+|-------|------|----------|---------|----------|
+| Certificate Serial Number | Text | `revoke_serial_number` | (empty) | Yes |
 
 ## Notification Templates
 
@@ -139,15 +209,15 @@ Configure email notifications:
 | CLM Success | Email | ops-team@example.com |
 | CLM Failure | Email | ops-team@example.com, security-team@example.com |
 
-Attach to Job Template:
+Attach to the Workflow Template:
 - **Success**: CLM Success notification
 - **Failure**: CLM Failure notification
 
-## Schedule Configuration (Renewal)
+## Schedule Configuration (Daily Expiry Check)
 
 | Field | Value |
 |-------|-------|
-| Name | Daily Renewal Check |
+| Name | Daily Expiry Check |
 | Start Date/Time | 02:00 local |
 | Repeat Frequency | Every 1 day |
-| Job Template | CLM - Renewal Check |
+| Job Template | CLM - Daily Expiry Check |

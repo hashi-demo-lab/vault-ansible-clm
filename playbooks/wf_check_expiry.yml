@@ -8,9 +8,12 @@
 #   - Red Hat Ansible Automation Platform (controller auth)
 #
 # Configurable variables (via survey or extra_vars):
-#   - source_inventory_name: AAP inventory to look up ansible_host (required)
 #   - cert_expiry_threshold_days: Days before expiry to trigger (default: 7)
 #   - renewal_inventory_name: Inventory to populate (default: CLM Renewal Targets)
+#
+# Source inventory for host-metadata lookups is the JT's running inventory,
+# auto-injected by AAP as `awx_inventory_id`. Set inventory at workflow launch
+# (Prompt on launch must be enabled on the JT) — no survey input needed.
 
 - name: "WF: Check Certificate Expiry"
   hosts: localhost
@@ -165,9 +168,20 @@
       ansible.builtin.debug:
         msg: "Hosts needing renewal: {{ _expiring_hostnames | join(', ') }}"
 
+    - name: Resolve source inventory ID (job's running inventory)
+      ansible.builtin.set_fact:
+        _source_inventory_id: "{{ awx_inventory_id | default(source_inventory_id) }}"
+
+    - name: Fail if source inventory ID is not available
+      ansible.builtin.fail:
+        msg: >-
+          No inventory ID available. Run this from AAP with an inventory selected
+          (Prompt on launch must be enabled on the JT), or pass source_inventory_id.
+      when: _source_inventory_id in [None, '', 'None']
+
     - name: Look up host details from source inventory via API
       ansible.builtin.uri:
-        url: "{{ controller_host }}/api/controller/v2/inventories/{{ source_inventory_id }}/hosts/?name={{ item }}"
+        url: "{{ controller_host }}/api/controller/v2/inventories/{{ _source_inventory_id }}/hosts/?name={{ item }}"
         method: GET
         headers:
           Authorization: "Bearer {{ controller_oauthtoken }}"

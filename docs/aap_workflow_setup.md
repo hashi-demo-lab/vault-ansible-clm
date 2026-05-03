@@ -97,7 +97,8 @@ on each target host carries the current cert between nodes.
 | Field | Value |
 |-------|-------|
 | Name | CLM - Daily Expiry Check |
-| Inventory | CLM Hosts |
+| Inventory | CLM Hosts (override at launch — see below) |
+| Prompt on launch (Inventory) | **Enabled** |
 | Project | Certificate Lifecycle Management |
 | Playbook | playbooks/wf_check_expiry.yml |
 | Credentials | Vault AppRole, Machine (SSH) |
@@ -105,6 +106,14 @@ on each target host carries the current cert between nodes.
 
 Queries Vault's Certificates Inventory for expiring leaf certs, builds the
 dynamic inventory of renewal targets, and feeds the issue/deploy workflow.
+
+The playbook itself runs against `localhost`, but uses the JT's running
+inventory (auto-injected by AAP as `awx_inventory_id`) to look up host
+metadata (`ansible_host`, `cert_service_type`) for the expiring CNs. The
+parent workflow's inventory cascades into this JT only if **Prompt on launch**
+is enabled — without it, AAP silently falls back to the JT's configured
+inventory. Do not configure a `source_inventory_id` survey; the playbook now
+auto-resolves it from the running job.
 
 ### CLM - Manual Revoke (standalone)
 

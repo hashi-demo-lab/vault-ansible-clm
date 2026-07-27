@@ -37,7 +37,13 @@ collections/
 # Backup artifacts (generated on targets)
 /tmp/cert_backups/
 
+# presentations folder
+presentation/
 # Logs
 *.log
 
 .claude/
+
+# Vendored agent skills (.claude/skills/* symlinks here; reinstallable via skills-lock.json)
+.agents/skills/remotion-best-practices/
+presentation/vault/certificate-lifecycle-management-storyteller-notes.md
